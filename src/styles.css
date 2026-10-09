@@ -1,0 +1,2679 @@
+/* Syne carries the Verse Wheel's wordmark and node labels. Scoped to .vw-display
+ * so the rest of the app keeps the system stack.
+ *
+ * This has to come before `@import "tailwindcss"`: that import expands inline
+ * into real rules, so any @import after it is no longer at the top of the
+ * stylesheet. The bundler warned about exactly that
+ *   "@import rules must precede all rules aside from @charset and @layer"
+ * and a late @import is dropped, which cost the wordmark its typeface without
+ * failing anything loudly. */
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&display=swap');
+@import "tailwindcss" source("../");
+@import "highlight.js/styles/github-dark.css";
+@source "../../../node_modules/streamdown/dist/*.js";
+
+:root {
+  --bg-primary: #0d0d14;
+  --bg-secondary: #13131e;
+  --bg-card: #1a1a28;
+  --bg-hover: #22223a;
+  --border: #2d2d45;
+  --text-primary: #e8e8f5;
+  --text-secondary: #9090b0;
+  --accent: #7c5cbf;
+  --accent-hover: #9170d4;
+  --accent-light: #a78bfa;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.6;
+}
+
+code { font-family: Menlo, Monaco, Consolas, 'Courier New', monospace; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+.gradient-text {
+  background: linear-gradient(135deg, #a78bfa, #60a5fa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.prose { color: var(--text-primary); }
+.prose p { margin-bottom: 0.75rem; }
+.prose p:last-child { margin-bottom: 0; }
+.prose code { background: var(--bg-hover); padding: 0.15em 0.4em; border-radius: 4px; font-size: 0.875em; }
+.prose pre { background: var(--bg-hover); padding: 1rem; border-radius: 8px; overflow-x: auto; margin-bottom: 0.75rem; }
+.prose pre code { background: none; padding: 0; }
+.prose h1, .prose h2, .prose h3 { color: var(--text-primary); margin: 1rem 0 0.5rem; font-weight: 600; }
+.prose ul, .prose ol { padding-left: 1.5rem; margin-bottom: 0.75rem; }
+.prose li { margin-bottom: 0.25rem; }
+.prose blockquote { border-left: 3px solid var(--accent); padding-left: 1rem; color: var(--text-secondary); margin-bottom: 0.75rem; }
+.prose strong { color: #c4b5fd; font-weight: 600; }
+.prose em { color: #93c5fd; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes typing {
+  0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+  40% { transform: scale(1.2); opacity: 1; }
+}
+
+.animate-fade-in { animation: fadeIn 0.25s ease forwards; }
+.typing-dot { animation: typing 1.2s ease-in-out infinite; }
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin 0.8s linear infinite; }
+
+@keyframes sheetUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.cv-sheet-up { animation: sheetUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+/* Immersive chat — translucent surfaces sit over a full-bleed character backdrop. */
+.cv-immersive-scroll::-webkit-scrollbar { width: 0; }
+.cv-chat-bubble-char {
+  background: rgba(18, 16, 28, 0.72);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.cv-chat-actionbtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 0.68rem;
+  font-weight: 600;
+  flex: 1;
+  padding: 0.3rem 0;
+}
+.cv-chat-actionbtn:hover { color: var(--text-primary); }
+
+@media (max-width: 720px) {
+  .claw-hero { grid-template-columns: 1fr !important; }
+  .twin-grid { grid-template-columns: 1fr !important; }
+  .cv-anywhere { grid-template-columns: 1fr !important; }
+}
+
+@media (max-width: 860px) {
+  .cv-sidebar {
+    position: fixed !important;
+    top: 60px;
+    bottom: 0;
+    left: 0;
+    z-index: 40;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+  }
+}
+
+/* ChatMark badges in the chat header — only roomy enough to show above tablet width. */
+@media (min-width: 720px) {
+  .cv-chat-badges { display: flex !important; }
+}
+
+/* ---------------------------------------------------------- Briefcase shell */
+/* The five-hub navigation. On desktop the hub links sit inline in the header
+ * and the left workspace rail insets the main content; below 860px the links
+ * collapse behind a hamburger and the rail is hidden (its links move into the
+ * mobile menu), leaving the page full width. */
+.cv-main-inset { margin-left: 220px; }
+
+@media (max-width: 860px) {
+  .cv-nav-links { display: none !important; }
+  .cv-hamburger { display: flex !important; }
+  .cv-side { display: none !important; }
+  .cv-main-inset { margin-left: 0 !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CVS — CharacterVerse Social (the HAN). A deliberately retro, mid-2000s
+   personal-page look (MySpace / SpaceHey): blue chrome, colored panel title
+   bars, Tahoma type and beveled buttons. Everything is scoped under `.cvs` so
+   it never leaks into the dark CharacterVerse app.
+   ═════════════════════════════════════════════════════════════════════════ */
+.cvs {
+  --cvs-blue: #3b5998;
+  --cvs-blue-2: #5c74b8;
+  --cvs-ink: #14213d;
+  --cvs-link: #16387a;
+  --cvs-panel-border: #90a2cc;
+  background: #c3cde1;
+  min-height: 100vh;
+  color: var(--cvs-ink);
+  font-family: Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.cvs a { color: var(--cvs-link); text-decoration: none; }
+.cvs a:hover { text-decoration: underline; }
+.cvs * { box-sizing: border-box; }
+
+.cvs-topbar {
+  background: linear-gradient(180deg, #4a6cb3, var(--cvs-blue));
+  color: #fff;
+  border-bottom: 2px solid #2b4278;
+}
+.cvs-topbar-inner {
+  max-width: 1000px; margin: 0 auto; padding: 12px 16px;
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+}
+.cvs-logo { display: flex; align-items: center; gap: 8px; color: #fff; font-weight: 700; font-size: 20px; }
+.cvs-logo:hover { text-decoration: none; }
+.cvs-logo b { color: #cfe0ff; font-weight: 800; }
+.cvs-logo small { display: block; font-size: 10px; font-weight: 400; color: #cdd9f2; letter-spacing: .02em; }
+.cvs-search { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+.cvs-search input { border: 1px solid #24406f; padding: 3px 6px; font-family: inherit; font-size: 12px; }
+.cvs-topbar-links { color: #dbe5fb; font-size: 12px; }
+.cvs-topbar-links a { color: #fff; font-weight: 700; }
+
+.cvs-nav {
+  background: linear-gradient(180deg, #cdd9f2, #a9bce4);
+  border-bottom: 1px solid #7f97cc;
+}
+.cvs-nav-inner {
+  max-width: 1000px; margin: 0 auto; padding: 5px 16px;
+  display: flex; gap: 4px; flex-wrap: wrap; align-items: center;
+}
+.cvs-nav a {
+  color: #12336f; font-weight: 700; font-size: 12px; padding: 3px 10px; border-radius: 3px;
+}
+.cvs-nav a:hover { background: #ffffff88; text-decoration: none; }
+.cvs-nav a.active { background: #fff; }
+.cvs-nav .spacer { margin-left: auto; }
+.cvs-nav .arn { color: #7a1fa2; }
+
+.cvs-main { max-width: 1000px; margin: 0 auto; padding: 16px; }
+.cvs-grid2 { display: grid; grid-template-columns: 1fr 300px; gap: 16px; align-items: start; }
+@media (max-width: 800px) { .cvs-grid2 { grid-template-columns: 1fr; } }
+
+.cvs-panel { background: #fff; border: 1px solid var(--cvs-panel-border); border-radius: 4px; margin-bottom: 16px; overflow: hidden; }
+.cvs-panel-title {
+  background: linear-gradient(180deg, #6d84c0, #4d66a6);
+  color: #fff; font-weight: 700; font-size: 12px; padding: 5px 10px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.cvs-panel-title.amber { background: linear-gradient(180deg, #e6a54b, #d98a1f); }
+.cvs-panel-title.green { background: linear-gradient(180deg, #4fae7a, #2d8a57); }
+.cvs-panel-title.purple { background: linear-gradient(180deg, #9a63c9, #7a34b0); }
+.cvs-panel-title a { color: #fff; font-size: 11px; font-weight: 400; }
+.cvs-panel-body { padding: 12px; }
+
+.cvs-btn {
+  font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer;
+  color: #12336f; padding: 4px 12px;
+  background: linear-gradient(180deg, #ffffff, #d9e1f2);
+  border: 1px solid #8296c4; border-radius: 3px;
+}
+.cvs-btn:hover { background: linear-gradient(180deg, #ffffff, #c7d4ee); }
+.cvs-btn:active { background: #c0cdeb; }
+.cvs-btn.primary { color: #fff; background: linear-gradient(180deg, #d33b3b, #b71c1c); border-color: #8f1414; }
+.cvs-btn.primary:hover { background: linear-gradient(180deg, #e04747, #a81818); }
+.cvs-btn:disabled { opacity: .55; cursor: default; }
+
+.cvs-field { display: block; margin-bottom: 10px; }
+.cvs-field label { display: block; font-weight: 700; font-size: 11px; margin-bottom: 3px; color: #2b3f6b; }
+.cvs-input, .cvs-textarea, .cvs-select {
+  width: 100%; font-family: inherit; font-size: 13px; padding: 5px 7px;
+  border: 1px solid #8296c4; border-radius: 2px; background: #fff;
+}
+.cvs-textarea { min-height: 70px; resize: vertical; }
+
+.cvs-people { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; }
+.cvs-person { text-align: center; font-size: 12px; }
+.cvs-person .name { font-weight: 700; display: block; margin-top: 4px; }
+.cvs-person .sub { color: #5a6785; font-size: 11px; }
+
+.cvs-pixel { image-rendering: pixelated; border: 1px solid #7f97cc; background: #eef2fb; display: block; }
+
+.cvs-chip { display: inline-block; background: #e7edfb; border: 1px solid #b9c6e8; color: #2b3f6b; border-radius: 10px; padding: 1px 9px; font-size: 11px; margin: 0 4px 4px 0; }
+.cvs-mood { display: inline-block; background: #fff3d6; border: 1px solid #e6c877; border-radius: 3px; padding: 1px 8px; font-size: 11px; color: #7a5a10; }
+
+.cvs-spec { width: 100%; font-size: 12px; border-collapse: collapse; }
+.cvs-spec td { padding: 4px 6px; vertical-align: top; border-bottom: 1px dotted #ccd6ec; }
+.cvs-spec td.k { font-weight: 700; color: #2b3f6b; width: 34%; }
+
+.cvs-comment { border-top: 1px solid #e4e9f4; padding: 9px 0; display: flex; gap: 10px; }
+.cvs-comment:first-child { border-top: none; }
+.cvs-comment .meta { font-size: 11px; color: #5a6785; }
+
+.cvs-footer { max-width: 1000px; margin: 8px auto 0; padding: 16px; text-align: center; font-size: 11px; color: #3a4a70; }
+.cvs-hero-note { background: #fff; border: 1px solid var(--cvs-panel-border); border-radius: 4px; padding: 12px; font-size: 12px; }
+.cvs-error { background: #ffe6e6; border: 1px solid #e0a0a0; color: #a11; padding: 7px 10px; border-radius: 3px; font-size: 12px; margin-bottom: 10px; }
+.cvs-ok { background: #e6ffe9; border: 1px solid #9ed6a8; color: #176b2a; padding: 7px 10px; border-radius: 3px; font-size: 12px; margin-bottom: 10px; }
+
+/* CVT (TabVerse) two-column layouts collapse to one column on narrow screens. */
+@media (max-width: 760px) {
+  .cvt-fork-grid { grid-template-columns: 1fr !important; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * CVV — CharacterVerse Video · the 2004 "Broadcast Yourself" resurgence.
+ * A dark, VHS-tinted broadcast surface. Red CVV accent, boxy bordered cards,
+ * Tahoma/Verdana chrome, and visited-blue links in the early-web tradition. */
+.cvv {
+  --cvv-red: #cc181e;
+  --cvv-red-dark: #8f1013;
+  --cvv-panel: #16161f;
+  --cvv-line: #34343f;
+  font-family: Tahoma, Verdana, Geneva, sans-serif;
+  color: var(--text-primary);
+  min-height: 100vh;
+  background:
+    radial-gradient(1200px 400px at 50% -120px, rgba(204,24,30,0.10), transparent 70%),
+    var(--bg-primary);
+}
+.cvv-wrap { max-width: 1180px; margin: 0 auto; padding: 0 1rem; }
+
+.cvv-bar {
+  position: sticky; top: 60px; z-index: 20;
+  background: linear-gradient(180deg, #1c1c26, #14141c);
+  border-bottom: 2px solid var(--cvv-red);
+}
+.cvv-bar-inner { display: flex; align-items: center; gap: 1rem; height: 52px; }
+.cvv-logo { display: flex; align-items: baseline; gap: 6px; text-decoration: none; flex-shrink: 0; }
+.cvv-logo b { font-size: 1.25rem; font-weight: 800; color: var(--text-primary); letter-spacing: -0.5px; }
+.cvv-logo .tv { background: var(--cvv-red); color: #fff; padding: 1px 6px; border-radius: 4px; font-weight: 800; font-size: 1.05rem; }
+.cvv-tag { font-size: 10px; color: var(--cvv-red); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+
+.cvv-navlink {
+  color: var(--text-secondary); text-decoration: none; font-size: 0.82rem; font-weight: 600;
+  padding: 6px 10px; border-radius: 5px;
+}
+.cvv-navlink:hover { color: var(--text-primary); background: var(--bg-hover); }
+.cvv-navlink.active { color: #fff; background: var(--cvv-red); }
+
+.cvv-search { flex: 1; display: flex; max-width: 420px; }
+.cvv-search input {
+  flex: 1; background: #0c0c12; border: 1px solid var(--cvv-line); border-right: none;
+  border-radius: 5px 0 0 5px; color: var(--text-primary); padding: 7px 10px; font-size: 0.82rem; outline: none;
+  font-family: inherit;
+}
+.cvv-search button {
+  background: linear-gradient(180deg, #3a3a48, #22222c); border: 1px solid var(--cvv-line);
+  border-radius: 0 5px 5px 0; color: var(--text-primary); padding: 0 12px; cursor: pointer; font-weight: 700;
+}
+
+.cvv-btn {
+  display: inline-flex; align-items: center; gap: 6px; font-family: inherit; cursor: pointer;
+  background: linear-gradient(180deg, #2a2a36, #1c1c26); border: 1px solid var(--cvv-line);
+  color: var(--text-primary); padding: 7px 14px; border-radius: 6px; font-size: 0.82rem; font-weight: 700;
+  text-decoration: none;
+}
+.cvv-btn:hover { border-color: #4a4a5a; background: linear-gradient(180deg, #33333f, #22222c); }
+.cvv-btn-red { background: linear-gradient(180deg, #e0242a, var(--cvv-red)); border-color: var(--cvv-red-dark); color: #fff; }
+.cvv-btn-red:hover { background: linear-gradient(180deg, #ee2a30, #d81920); border-color: var(--cvv-red-dark); }
+.cvv-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.cvv-chip {
+  font-size: 0.78rem; font-weight: 600; padding: 5px 12px; border-radius: 999px; cursor: pointer;
+  background: var(--bg-card); border: 1px solid var(--cvv-line); color: var(--text-secondary); white-space: nowrap;
+  font-family: inherit;
+}
+.cvv-chip:hover { color: var(--text-primary); border-color: #4a4a5a; }
+.cvv-chip.active { background: #fff; color: #111; border-color: #fff; }
+
+.cvv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 1.1rem; }
+
+.cvv-card { text-decoration: none; color: inherit; display: block; }
+.cvv-poster {
+  position: relative; aspect-ratio: 16 / 10; border-radius: 8px; overflow: hidden;
+  border: 1px solid var(--cvv-line);
+  display: flex; align-items: center; justify-content: center; font-size: 3.2rem;
+  background:
+    repeating-linear-gradient(0deg, rgba(0,0,0,0.16) 0 2px, transparent 2px 4px),
+    linear-gradient(135deg, #24242f, #14141c);
+}
+.cvv-card:hover .cvv-poster { border-color: var(--cvv-red); }
+.cvv-duration {
+  position: absolute; right: 6px; bottom: 6px; background: rgba(0,0,0,0.82); color: #fff;
+  font-size: 11px; font-weight: 700; padding: 1px 5px; border-radius: 3px; font-family: monospace;
+}
+.cvv-playbadge {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.15s; background: rgba(204,24,30,0.22);
+}
+.cvv-card:hover .cvv-playbadge { opacity: 1; }
+.cvv-agentflag {
+  position: absolute; left: 6px; top: 6px; background: var(--accent); color: #fff;
+  font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.04em;
+}
+.cvv-vtitle { font-size: 0.9rem; font-weight: 700; line-height: 1.25; margin: 8px 0 3px; color: var(--text-primary); }
+.cvv-vmeta { font-size: 0.76rem; color: var(--text-secondary); }
+.cvv-link { color: #8ab4f8; text-decoration: none; }
+.cvv-link:hover { text-decoration: underline; }
+.cvv-link:visited { color: #b48ae0; }
+
+.cvv-panel { background: var(--cvv-panel); border: 1px solid var(--cvv-line); border-radius: 10px; padding: 1rem; }
+.cvv-input, .cvv-textarea, .cvv-select {
+  width: 100%; background: #0c0c12; border: 1px solid var(--cvv-line); border-radius: 6px;
+  color: var(--text-primary); padding: 9px 11px; font-size: 0.86rem; font-family: inherit; outline: none;
+}
+.cvv-input:focus, .cvv-textarea:focus, .cvv-select:focus { border-color: var(--cvv-red); }
+.cvv-textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
+.cvv-label { display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin: 0 0 5px; }
+
+/* The scanline "broadcast" card shown for poster-only archive reels. */
+.cvv-broadcast {
+  position: relative; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  background:
+    repeating-linear-gradient(0deg, rgba(0,0,0,0.22) 0 2px, transparent 2px 4px),
+    radial-gradient(circle at 50% 40%, #2a2a38, #0b0b11);
+  border: 1px solid var(--cvv-line);
+}
+.cvv-broadcast .big { font-size: 5rem; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5)); }
+.cvv-broadcast .rec { position: absolute; top: 12px; left: 14px; display: flex; align-items: center; gap: 6px; font-family: monospace; font-size: 12px; color: #ff5a5a; font-weight: 700; }
+.cvv-broadcast .rec i { width: 9px; height: 9px; border-radius: 50%; background: #ff2a2a; animation: pulse 1.4s ease-in-out infinite; }
+
+.cvv-marquee { overflow: hidden; white-space: nowrap; }
+.cvv-marquee span { display: inline-block; padding-left: 100%; animation: cvvMarquee 22s linear infinite; }
+@keyframes cvvMarquee { to { transform: translateX(-100%); } }
+
+.cvv-tagpill { display: inline-block; font-size: 0.72rem; color: var(--accent-light); background: rgba(124,92,191,0.14); border: 1px solid rgba(124,92,191,0.35); padding: 2px 8px; border-radius: 999px; }
+
+/* CVV collapses its two-column watch layout and tightens the top bar on mobile. */
+@media (max-width: 900px) {
+  .cvv-watch-grid { grid-template-columns: 1fr !important; }
+}
+@media (max-width: 640px) {
+  .cvv-search { display: none !important; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * CVJ — CharacterVerse Jobs · the agentic gig marketplace ("agentic Fiverr").
+ * A clean, professional dark surface with a Fiverr-green accent, card grid,
+ * star ratings and coin price badges. */
+.cvj {
+  --cvj-green: #1dbf73;
+  --cvj-green-dark: #159c5b;
+  --cvj-panel: #16161f;
+  --cvj-line: #2d2d3c;
+  color: var(--text-primary);
+  min-height: 100vh;
+  background:
+    radial-gradient(1200px 420px at 50% -140px, rgba(29,191,115,0.10), transparent 70%),
+    var(--bg-primary);
+}
+.cvj-wrap { max-width: 1180px; margin: 0 auto; padding: 0 1rem; }
+
+.cvj-bar {
+  position: sticky; top: 60px; z-index: 20;
+  background: linear-gradient(180deg, #17171f, #12121a);
+  border-bottom: 1px solid var(--cvj-line);
+}
+.cvj-bar-inner { display: flex; align-items: center; gap: 1rem; height: 54px; }
+.cvj-logo { display: flex; align-items: baseline; gap: 6px; text-decoration: none; flex-shrink: 0; }
+.cvj-logo b { font-size: 1.2rem; font-weight: 800; color: var(--text-primary); letter-spacing: -0.4px; }
+.cvj-logo .dot { color: var(--cvj-green); }
+
+.cvj-navlink { color: var(--text-secondary); text-decoration: none; font-size: 0.85rem; font-weight: 600; padding: 6px 10px; border-radius: 6px; }
+.cvj-navlink:hover { color: var(--text-primary); background: var(--bg-hover); }
+.cvj-navlink.active { color: #fff; background: var(--cvj-green); }
+
+.cvj-search { flex: 1; display: flex; max-width: 460px; }
+.cvj-search input {
+  flex: 1; background: #0c0c12; border: 1px solid var(--cvj-line); border-right: none;
+  border-radius: 7px 0 0 7px; color: var(--text-primary); padding: 8px 12px; font-size: 0.85rem; outline: none;
+}
+.cvj-search input:focus { border-color: var(--cvj-green); }
+.cvj-search button {
+  background: var(--cvj-green); border: 1px solid var(--cvj-green-dark);
+  border-radius: 0 7px 7px 0; color: #fff; padding: 0 14px; cursor: pointer; font-weight: 700;
+}
+
+.cvj-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;
+  background: var(--bg-card); border: 1px solid var(--cvj-line);
+  color: var(--text-primary); padding: 9px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: 700;
+  text-decoration: none;
+}
+.cvj-btn:hover { border-color: #45455a; background: var(--bg-hover); }
+.cvj-btn-green { background: var(--cvj-green); border-color: var(--cvj-green-dark); color: #fff; }
+.cvj-btn-green:hover { background: #22cc7d; border-color: var(--cvj-green-dark); }
+.cvj-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.cvj-chip {
+  font-size: 0.8rem; font-weight: 600; padding: 6px 13px; border-radius: 999px; cursor: pointer;
+  background: var(--bg-card); border: 1px solid var(--cvj-line); color: var(--text-secondary); white-space: nowrap;
+}
+.cvj-chip:hover { color: var(--text-primary); border-color: #45455a; }
+.cvj-chip.active { background: var(--cvj-green); color: #fff; border-color: var(--cvj-green); }
+
+.cvj-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 1.1rem; }
+
+.cvj-card {
+  text-decoration: none; color: inherit; display: flex; flex-direction: column;
+  background: var(--cvj-panel); border: 1px solid var(--cvj-line); border-radius: 12px; overflow: hidden;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.cvj-card:hover { border-color: var(--cvj-green); transform: translateY(-2px); }
+.cvj-card-top {
+  height: 96px; display: flex; align-items: center; justify-content: center; font-size: 2.6rem;
+  border-bottom: 1px solid var(--cvj-line);
+}
+.cvj-card-body { padding: 0.85rem 0.9rem 0.95rem; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.cvj-seller { display: flex; align-items: center; gap: 7px; font-size: 0.8rem; color: var(--text-secondary); }
+.cvj-seller .ava { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; }
+.cvj-gtitle { font-size: 0.92rem; font-weight: 600; line-height: 1.3; color: var(--text-primary); }
+.cvj-stars { color: #f6a609; font-size: 0.82rem; letter-spacing: 1px; }
+.cvj-price-row { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--cvj-line); padding-top: 8px; margin-top: auto; }
+.cvj-price { font-size: 0.95rem; font-weight: 800; color: var(--text-primary); }
+
+.cvj-panel { background: var(--cvj-panel); border: 1px solid var(--cvj-line); border-radius: 12px; padding: 1.1rem; }
+.cvj-input, .cvj-textarea, .cvj-select {
+  width: 100%; background: #0c0c12; border: 1px solid var(--cvj-line); border-radius: 8px;
+  color: var(--text-primary); padding: 9px 11px; font-size: 0.88rem; font-family: inherit; outline: none;
+}
+.cvj-input:focus, .cvj-textarea:focus, .cvj-select:focus { border-color: var(--cvj-green); }
+.cvj-textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
+.cvj-label { display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin: 0 0 5px; }
+.cvj-link { color: var(--cvj-green); text-decoration: none; font-weight: 600; }
+.cvj-link:hover { text-decoration: underline; }
+.cvj-tag { display: inline-block; font-size: 0.72rem; color: var(--text-secondary); background: var(--bg-hover); border: 1px solid var(--cvj-line); padding: 2px 8px; border-radius: 999px; }
+.cvj-badge-agent { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.04em; background: var(--accent); color: #fff; }
+
+@media (max-width: 900px) { .cvj-gig-grid { grid-template-columns: 1fr !important; } }
+@media (max-width: 640px) { .cvj-search { display: none !important; } }
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * CAZ — CharacterVerse Agentz Zone ("agentbook"). Reuses the CVS retro chrome
+ * (.cvs-*) and adds the agent grid, the generated robot tiles and the Agency
+ * Duality Axis switch. Scoped under .caz (which also carries .cvs). */
+.caz-agents { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; }
+.caz-agent-card { display: block; text-align: center; text-decoration: none; }
+.caz-agent-card:hover { text-decoration: none; }
+.caz-agent-name { font-weight: 700; font-size: 13px; color: var(--cvs-link); margin-bottom: 5px; }
+.caz-agent-card:hover .caz-agent-name { text-decoration: underline; }
+.caz-robot-tile {
+  border: 1px solid #90a2cc; border-radius: 4px; overflow: hidden; aspect-ratio: 1;
+  display: flex; align-items: center; justify-content: center; background: #eef2fb;
+}
+.caz-robot-tile svg { width: 100%; height: 100%; }
+.caz-agent-card:hover .caz-robot-tile { border-color: #3b5998; }
+.caz-agent-sub { font-size: 11px; color: #5a6785; margin-top: 5px; }
+
+/* The friends / connected-agents grid on a profile — smaller robot tiles. */
+.caz-friends { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 10px; }
+.caz-friend { text-align: center; font-size: 11px; text-decoration: none; }
+.caz-friend .caz-robot-tile { margin-bottom: 3px; }
+.caz-friend .fname { color: var(--cvs-link); font-weight: 700; display: block; }
+
+/* Profile header robot (large, framed). */
+.caz-portrait { border: 1px solid #90a2cc; border-radius: 4px; background: #eef2fb; width: 150px; height: 150px; margin: 0 auto; overflow: hidden; }
+.caz-portrait svg { width: 100%; height: 100%; }
+
+/* The Agency Duality Axis — the shadowing switchboard on the control deck. */
+.caz-axis { display: grid; grid-template-columns: 1fr 150px 1fr; gap: 10px; align-items: stretch; }
+@media (max-width: 720px) { .caz-axis { grid-template-columns: 1fr; } }
+.caz-axis-side { border: 1px solid #b9c6e8; border-radius: 6px; padding: 10px; background: #f4f7fd; font-size: 12px; }
+.caz-axis-side h4 { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #2b3f6b; margin-bottom: 6px; }
+.caz-axis-switch { border: 1px solid #b9c6e8; border-radius: 6px; padding: 10px; text-align: center; background: #eef2fb; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
+.caz-toggle {
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer; user-select: none;
+  border: 1px solid #8f1414; border-radius: 999px; padding: 4px 12px; font-weight: 700; font-size: 12px;
+  background: linear-gradient(180deg, #eaeef8, #cfd9f0); color: #2b3f6b;
+}
+.caz-toggle.on { background: linear-gradient(180deg, #4fae7a, #2d8a57); color: #fff; border-color: #1f6b43; }
+.caz-toggle .knob { width: 22px; height: 12px; border-radius: 999px; background: #9aa8cc; position: relative; }
+.caz-toggle.on .knob { background: #d7ffe6; }
+.caz-toggle .knob::after { content: ''; position: absolute; top: 1px; left: 1px; width: 10px; height: 10px; border-radius: 50%; background: #fff; transition: left .15s; }
+.caz-toggle.on .knob::after { left: 11px; }
+
+/* Cool-new-agents row: horizontal robot cards. */
+.caz-newrow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+@media (max-width: 640px) { .caz-newrow { grid-template-columns: repeat(2, 1fr); } }
+.caz-features { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 8px; }
+@media (max-width: 760px) { .caz-features { grid-template-columns: repeat(2, 1fr); } }
+.caz-feature { border: 1px solid var(--cvs-panel-border); border-radius: 4px; background: #fff; padding: 10px; font-size: 11px; color: #3a4a70; }
+.caz-feature b { display: block; color: #2b3f6b; font-size: 12px; margin-bottom: 3px; }
+.caz-stat { display: flex; justify-content: space-between; border-bottom: 1px dotted #ccd6ec; padding: 5px 2px; font-size: 12px; }
+.caz-stat b { color: #b0361f; }
+
+/* ============================================================ The Verse Wheel
+ * Home page ('/'). A celestial console: seven Verses on an orbit around the
+ * core, each opening a Sub-Wheel of its common pages. Everything that moves
+ * here animates transform/opacity only — the ring rotates for the life of the
+ * page, so nothing in it may touch layout.
+ * ------------------------------------------------------------------------- */
+
+.vw-display { font-family: 'Syne', 'Segoe UI', sans-serif; letter-spacing: -0.01em; }
+
+.vw-root {
+  position: relative;
+  min-height: calc(100vh - 60px);
+  overflow: hidden;
+  isolation: isolate;
+  padding: 3.5rem 1.25rem 5rem;
+}
+
+/* --- atmosphere: three fixed, non-interactive layers behind everything --- */
+.vw-sky, .vw-grain, .vw-horizon { position: absolute; inset: 0; pointer-events: none; z-index: -1; }
+
+.vw-sky {
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 8%, rgba(139,111,208,0.28), transparent 62%),
+    radial-gradient(ellipse 46% 38% at 82% 42%, rgba(189,109,178,0.18), transparent 66%),
+    radial-gradient(ellipse 52% 40% at 14% 58%, rgba(69,184,196,0.13), transparent 68%),
+    linear-gradient(180deg, #0b0b16 0%, #12101f 46%, #0d0d16 100%);
+}
+
+/* Fine tri-tone grain, so the nebula reads as film rather than as a CSS gradient. */
+.vw-grain {
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.055'/%3E%3C/svg%3E");
+}
+
+/* The horizon grid from the reference — a perspective floor under the wheel. */
+.vw-horizon {
+  top: auto; height: 42vh;
+  background-image:
+    linear-gradient(rgba(167,139,250,0.10) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(167,139,250,0.10) 1px, transparent 1px);
+  background-size: 64px 64px;
+  transform: perspective(340px) rotateX(66deg);
+  transform-origin: bottom center;
+  mask-image: linear-gradient(180deg, transparent, #000 55%);
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 55%);
+}
+
+.vw-star { position: absolute; border-radius: 50%; background: #e8e8f5; animation: vwTwinkle 4s ease-in-out infinite; }
+
+@keyframes vwTwinkle { 0%, 100% { opacity: 0.18; } 50% { opacity: 0.85; } }
+@keyframes vwDrift  { to { transform: rotate(360deg); } }
+@keyframes vwFloat  { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+@keyframes vwRise   { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes vwHalo   { 0%, 100% { opacity: 0.5; transform: scale(1); } 50% { opacity: 0.9; transform: scale(1.06); } }
+/* Opacity-only entrance for anything already carrying its own transform. The
+ * open-ended `to` inherits whatever the element's own opacity is, and `backwards`
+ * fill hands control straight back afterwards — so a node can fade in on arrival
+ * and still be dimmed later when another Verse takes the wheel. */
+@keyframes vwFade   { from { opacity: 0; } }
+
+.vw-rise { opacity: 0; animation: vwRise 0.62s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+
+/* --- the wheel --- */
+.vw-wheel { position: relative; width: 100%; max-width: 620px; margin: 0 auto; aspect-ratio: 1; }
+
+/* Tick ring: rotates forever, so it must stay purely transform-driven. */
+.vw-ticks { position: absolute; inset: 0; animation: vwDrift 150s linear infinite; transform-origin: 50% 50%; }
+
+.vw-node {
+  position: absolute; left: 50%; top: 50%;
+  display: flex; flex-direction: column; align-items: center; gap: 0.4rem;
+  width: 132px; margin-left: -66px; margin-top: -46px;
+  background: none; border: none; padding: 0; cursor: pointer;
+  color: var(--text-primary);
+  transition: transform 0.62s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s ease;
+  animation: vwFade 0.6s ease backwards;
+}
+
+.vw-orb {
+  position: relative;
+  width: 58px; height: 58px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: radial-gradient(circle at 32% 28%, rgba(255,255,255,0.22), rgba(13,13,22,0.9) 68%);
+  border: 1px solid currentColor;
+  transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.32s ease;
+}
+.vw-orb::after {
+  content: ''; position: absolute; inset: -7px; border-radius: 50%;
+  border: 1px solid currentColor; opacity: 0.28;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.vw-node:hover .vw-orb, .vw-node:focus-visible .vw-orb { transform: scale(1.13); }
+.vw-node:hover .vw-orb::after, .vw-node:focus-visible .vw-orb::after { opacity: 0.7; transform: scale(1.1); }
+.vw-node:focus-visible { outline: none; }
+.vw-node:focus-visible .vw-orb { box-shadow: 0 0 0 3px rgba(167,139,250,0.55); }
+
+.vw-label { font-size: 0.74rem; font-weight: 700; line-height: 1.15; text-align: center; text-shadow: 0 2px 10px rgba(0,0,0,0.75); }
+
+/* Hover callout — the speech bubble from the reference sheet. */
+.vw-callout {
+  position: absolute; bottom: calc(100% + 8px); left: 50%;
+  transform: translateX(-50%) translateY(5px) scale(0.94);
+  white-space: nowrap; padding: 0.3rem 0.6rem; border-radius: 999px;
+  background: rgba(21,20,34,0.96); border: 1px solid var(--border);
+  font-size: 0.68rem; font-weight: 600; color: var(--text-primary);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.vw-node:hover .vw-callout, .vw-node:focus-visible .vw-callout { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+
+/* --- the core --- */
+.vw-core {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 172px; height: 172px; border-radius: 50%;
+  display: grid; place-items: center; text-align: center;
+  /* Nothing inside may push the core's centre: content is clipped to the
+   * circle and laid out in a column exactly as wide as it. */
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 38%, rgba(167,139,250,0.30), rgba(13,13,22,0.94) 70%);
+  border: 1px solid rgba(167,139,250,0.42);
+  transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.vw-core-halo {
+  position: absolute; left: 50%; top: 50%; width: 222px; height: 222px; margin: -111px 0 0 -111px;
+  border-radius: 50%; border: 1px dashed rgba(167,139,250,0.3);
+  animation: vwHalo 6s ease-in-out infinite; pointer-events: none;
+}
+
+/* Words on top, the turning Seven Entrances mark beneath, Enter at the foot.
+ * `min-width: 0` and a fixed width are what keep a long Verse name from
+ * widening the column — the old drift came from exactly that. */
+.vw-core-inner {
+  width: 140px; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
+}
+.vw-core-eyebrow { display: block; max-width: 100%; font-weight: 800; letter-spacing: 0.06em; color: var(--text-secondary); white-space: nowrap; line-height: 1; }
+.vw-core-title { display: block; max-width: 100%; font-weight: 800; line-height: 1.12; white-space: nowrap; }
+.vw-core-mark { display: block; line-height: 0; }
+/* The mark turns faster here than in the nav bar: at the core it is the object
+ * the whole page is about, not a logo in a corner. */
+.vw-core-mark .cvch-spin     { animation-duration: 26s; }
+.vw-core-mark .cvch-spin-rev { animation-duration: 18s; }
+.vw-core-tag { font-size: 0.56rem; letter-spacing: 0.08em; color: var(--text-secondary); line-height: 1; }
+.vw-core-enter { display: inline-flex; align-items: center; gap: 0.2rem; font-size: 0.68rem; font-weight: 700; text-decoration: none; }
+.vw-core-enter:hover { text-decoration: underline; }
+
+/* --- the guide's corner link, and the popout it opens --- */
+.vw-how-link {
+  position: absolute; right: 0.9rem; bottom: 0.75rem; padding: 0.15rem 0.1rem; border: none; background: none;
+  font-size: 0.66rem; font-weight: 800; letter-spacing: 0.09em; color: var(--accent-light); cursor: pointer;
+}
+.vw-how-link:hover { color: #c9b6ff; text-decoration: underline; }
+.vw-how-link:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(167,139,250,0.6); border-radius: 4px; }
+
+.vw-pop-scrim {
+  position: fixed; inset: 0; z-index: 120; display: grid; place-items: center; padding: 1rem;
+  background: rgba(6, 6, 12, 0.7); backdrop-filter: blur(4px); animation: vwFade 0.2s ease;
+}
+.vw-pop {
+  position: relative; width: min(1120px, 100%); max-height: calc(100vh - 2rem); overflow-y: auto;
+  padding: 2rem 1.5rem; border-radius: 20px; background: rgba(19,19,30,0.97); border: 1px solid var(--border);
+  box-shadow: 0 30px 90px rgba(0,0,0,0.65); outline: none; animation: vwRise 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.vw-pop-close {
+  position: absolute; top: 0.9rem; right: 0.9rem; display: grid; place-items: center; width: 34px; height: 34px;
+  border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--text-secondary); cursor: pointer;
+}
+.vw-pop-close:hover { color: var(--text-primary); background: var(--bg-hover); }
+
+/* --- the collapse/raise bar over the index --- */
+.vw-fold-bar {
+  display: flex; align-items: center; gap: 0.6rem; width: 100%; padding: 0; border: none; background: none;
+  color: var(--text-secondary); cursor: pointer;
+}
+.vw-fold-line { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(167,139,250,0.4), transparent); }
+.vw-fold-knob {
+  display: grid; place-items: center; width: 34px; height: 24px; border-radius: 999px;
+  border: 1px solid var(--border); background: rgba(19,19,30,0.9); transition: color 0.15s ease, border-color 0.15s ease;
+}
+.vw-fold-bar:hover .vw-fold-knob, .vw-fold-bar:focus-visible .vw-fold-knob { color: var(--text-primary); border-color: rgba(167,139,250,0.6); }
+.vw-fold-bar:focus-visible { outline: none; }
+/* Folding by grid rows rather than height, so the content's real height is
+ * never measured in script and the animation still has somewhere to go. */
+.vw-fold { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.38s cubic-bezier(0.22, 1, 0.36, 1); }
+.vw-fold[data-open] { grid-template-rows: 1fr; }
+.vw-fold-inner { min-height: 0; overflow: hidden; }
+.vw-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* --- sub-wheel satellites --- */
+.vw-sat {
+  position: absolute; left: 50%; top: 50%;
+  width: 124px; margin-left: -62px; margin-top: -40px;
+  display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
+  text-decoration: none; color: var(--text-primary);
+  animation: vwFade 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+.vw-sat-dot {
+  width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center;
+  background: rgba(21,20,34,0.94); border: 1px solid currentColor;
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.24s ease;
+}
+.vw-sat:hover .vw-sat-dot, .vw-sat:focus-visible .vw-sat-dot { transform: scale(1.14); background: rgba(34,34,58,0.98); }
+.vw-sat-label { font-size: 0.7rem; font-weight: 700; text-align: center; line-height: 1.2; text-shadow: 0 2px 9px rgba(0,0,0,0.8); }
+.vw-sat:focus-visible { outline: none; }
+.vw-sat:focus-visible .vw-sat-dot { box-shadow: 0 0 0 3px rgba(167,139,250,0.55); }
+
+/* --- the stage: wheel beside the console rail, wheel first on narrow screens --- */
+.vw-stage { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 2rem; align-items: start; max-width: 1120px; margin: 0 auto; }
+.vw-stack { display: none; }
+
+@media (max-width: 980px) {
+  .vw-stage { grid-template-columns: minmax(0, 1fr); }
+  .vw-explain-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 1.75rem !important; }
+}
+/* Below this a seven-point ring stops being legible or tappable, so the wheel
+ * is replaced outright by an expanding list carrying the same data. */
+@media (max-width: 720px) {
+  .vw-root { padding: 2.25rem 1rem 3.5rem; }
+  .vw-wheel { display: none; }
+  .vw-stack { display: block; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vw-ticks, .vw-star, .vw-core-halo { animation: none; }
+  .vw-rise { animation-duration: 0.01ms; opacity: 1; }
+  .vw-node, .vw-sat { animation-duration: 0.01ms; }
+  .vw-node, .vw-orb, .vw-callout, .vw-sat-dot, .vw-core { transition-duration: 0.01ms; }
+  .vw-fold { transition: none; }
+  .vw-pop, .vw-pop-scrim { animation: none; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * Character Codex — the advanced view shared by /discover and /ask.
+ *
+ * Everything data-driven (bar widths, node colours, ring positions) stays inline
+ * in the components; this file carries only what inline styles cannot express:
+ * keyframes, hover, the mobile collapse, and the reduced-motion opt-out.
+ */
+
+@keyframes cdxSheet { from { opacity: 0; transform: translateY(12px) scale(0.985); } }
+@keyframes cdxVeil  { from { opacity: 0; } }
+@keyframes cdxPulse { 50% { opacity: 0.35; } }
+
+/* `backwards` fill so the entrance hands control straight back to the element —
+ * the sheet keeps no residual transform that would fight a later hover or scroll. */
+.cdx-overlay { animation: cdxVeil 0.2s ease backwards; }
+.cdx-sheet   { animation: cdxSheet 0.34s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+.cdx-pulse   { animation: cdxPulse 1.4s ease-in-out infinite; }
+
+/* Bars grow rather than snap when a level-up or a resync changes the reading. */
+.cdx-bar { transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1); }
+
+.cdx-card { transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease; }
+.cdx-card:hover { transform: translateY(-3px); border-color: var(--accent); }
+
+.cdx-node { transition: transform 0.16s cubic-bezier(0.34, 1.4, 0.64, 1), background 0.16s ease, border-color 0.16s ease; }
+.cdx-node:hover { transform: translate(-50%, -50%) scale(1.12) !important; }
+
+.cdx-advanced-btn { transition: background 0.15s ease, color 0.15s ease; }
+.cdx-advanced-btn:hover { background: rgba(255, 255, 255, 0.06) !important; }
+
+.cdx-scroll { scrollbar-width: thin; }
+
+/* One column below 900px: the ring and the node panel each need the full width
+ * before the ring's 22%-wide node labels start overlapping. */
+@media (max-width: 900px) {
+  .cdx-body { grid-template-columns: minmax(0, 1fr) !important; }
+  .cdx-body > section:first-child { border-right: none !important; border-bottom: 1px solid var(--border); }
+  .cdx-ring { max-width: 340px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cdx-overlay, .cdx-sheet { animation-duration: 0.01ms; }
+  .cdx-pulse { animation: none; opacity: 0.6; }
+  .cdx-bar, .cdx-card, .cdx-node, .cdx-advanced-btn { transition-duration: 0.01ms; }
+  .cdx-card:hover { transform: none; }
+  .cdx-node:hover { transform: translate(-50%, -50%) !important; }
+}
+
+/* ------------------------------------------------------------------ SPR ---
+   Super Position Responses. The superimposed branches shimmer because they are
+   genuinely all live at once; the shimmer stops the instant one is measured, so
+   motion here carries state rather than decorating it. Every drift is a
+   transform/opacity pair so nothing reflows while it runs. */
+
+@keyframes sprDrift {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  25%      { transform: translate3d(0.9px, -1.1px, 0); }
+  50%      { transform: translate3d(-0.7px, 0.8px, 0); }
+  75%      { transform: translate3d(1.1px, 0.5px, 0); }
+}
+@keyframes sprBreathe { 50% { opacity: 0.42; } }
+@keyframes sprSweep   { to { transform: translateX(320%); } }
+@keyframes sprSettle  { from { opacity: 0; transform: translateY(6px); } }
+@keyframes sprPulseRing {
+  0%   { opacity: 0.65; transform: scale(1); }
+  100% { opacity: 0;    transform: scale(1.9); }
+}
+
+.spr-ghost   { animation: sprDrift 5.5s ease-in-out infinite; }
+.spr-live    { animation: sprBreathe 3.4s ease-in-out infinite; }
+.spr-sweep   { animation: sprSweep 2.6s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+.spr-settle  { animation: sprSettle 0.32s ease-out both; }
+.spr-ring    { animation: sprPulseRing 2.2s ease-out infinite; transform-origin: center; }
+
+.spr-node    { transition: r 220ms ease, cx 220ms ease, cy 220ms ease, opacity 180ms ease; }
+.spr-link    { transition: opacity 180ms ease, stroke-width 180ms ease; }
+
+/* The measured branch stops moving. That is the readout: stillness means locked. */
+.spr-locked  { animation: none !important; }
+
+@media (max-width: 1180px) {
+  .spr-grid { grid-template-columns: 1fr !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spr-ghost, .spr-live, .spr-sweep, .spr-ring { animation: none; }
+  .spr-settle { animation-duration: 0.01ms; }
+  .spr-node, .spr-link { transition-duration: 0.01ms; }
+}
+
+/* ---------------------------------------------------------------- Art Studio */
+/* The canvas itself is the animation — thousands of particle paths accumulating
+   in real time — so the only motion added here is the tracing progress bar. */
+
+@keyframes artTrace { 50% { opacity: 0.45; } }
+
+.art-tracing { animation: artTrace 1.4s ease-in-out infinite; }
+
+@media (max-width: 1080px) {
+  .art-grid { grid-template-columns: 1fr !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .art-tracing { animation: none; }
+}
+
+/* ----------------------------------------------- CharacterVerse index chrome */
+/* The bar shared by /search, /cstore and /cmail, plus the Seven Entrances mark
+   and the Verse launcher panel. Everything that moves here is transform or
+   opacity only — the mark sits in a sticky bar, and a bar that reflows while
+   you read is a bar nobody trusts. */
+
+@keyframes cvchSpin    { to { transform: rotate(360deg); } }
+@keyframes cvchPanelIn { from { opacity: 0; transform: translateY(-6px) scale(0.985); } }
+
+.cvch-spin     { animation: cvchSpin 64s linear infinite; }
+.cvch-spin-rev { animation: cvchSpin 44s linear infinite reverse; }
+
+.cvch-mark { border-radius: 10px; padding: 0.15rem 0.3rem; transition: background 0.16s ease; }
+.cvch-mark:hover, .cvch-mark:focus-visible { background: var(--bg-hover); outline: none; }
+.cvch-mark:focus-visible { box-shadow: 0 0 0 2px rgba(167,139,250,0.6); }
+/* Hovering the mark speeds the wheel up rather than starting it — the object is
+   already turning, and a mark that only animates on hover reads as a gimmick. */
+.cvch-mark:hover .cvch-spin     { animation-duration: 9s; }
+.cvch-mark:hover .cvch-spin-rev { animation-duration: 7s; }
+
+/* The mark as the Verses trigger. A button, so it has to shed the button
+   chrome the browser gives it and pick up the layout the link version had
+   inline — same drawing, same padding, same hover. */
+.cvch-mark-btn {
+  display: inline-flex; align-items: center; gap: 0.4rem; flex-shrink: 0;
+  border: none; background: none; color: inherit; font: inherit;
+  text-align: left; cursor: pointer;
+}
+
+.cvch-link {
+  font-size: 0.82rem; font-weight: 600; color: var(--text-secondary);
+  text-decoration: none; padding: 0.3rem 0.1rem; border-bottom: 1.5px solid transparent;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.cvch-link:hover { color: var(--text-primary); }
+.cvch-link[data-active] { color: var(--text-primary); border-bottom-color: var(--accent-light); }
+
+.cvch-icon, .cvch-avatar {
+  display: flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 999px;
+  border: 1px solid transparent; background: none; color: var(--text-secondary);
+  cursor: pointer; text-decoration: none; transition: background 0.16s ease, color 0.16s ease;
+}
+.cvch-icon:hover, .cvch-avatar:hover { background: var(--bg-hover); color: var(--text-primary); }
+.cvch-avatar { border-color: var(--border); }
+
+.cvch-ghost {
+  display: inline-flex; align-items: center; gap: 0.25rem; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--bg-card); color: var(--text-secondary);
+  cursor: pointer; transition: background 0.15s ease, color 0.15s ease;
+}
+.cvch-ghost:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+.cvch-panel { animation: cvchPanelIn 0.18s ease-out both; }
+
+.cvch-tile {
+  display: grid; justify-items: center; gap: 0.4rem; padding: 0.7rem 0.35rem;
+  border: 1px solid transparent; border-radius: 13px; background: none;
+  cursor: pointer; text-align: center; transition: background 0.16s ease, border-color 0.16s ease;
+}
+.cvch-tile:hover, .cvch-tile:focus-visible { background: var(--bg-hover); border-color: var(--border); outline: none; }
+.cvch-tile-orb {
+  display: flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--bg-card);
+  transition: transform 0.16s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+.cvch-tile:hover .cvch-tile-orb, .cvch-tile:focus-visible .cvch-tile-orb { transform: scale(1.09); }
+
+.cvch-row {
+  display: flex; align-items: center; gap: 0.6rem; padding: 0.45rem 0.5rem;
+  border-radius: 11px; text-decoration: none; transition: background 0.15s ease;
+}
+.cvch-row:hover, .cvch-row:focus-visible { background: var(--bg-hover); outline: none; }
+.cvch-row-dot {
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 28px; height: 28px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--bg-card);
+}
+
+.cvch-panel-foot {
+  display: inline-flex; align-items: center; gap: 0.3rem; margin-top: 0.9rem;
+  font-size: 0.72rem; font-weight: 700; color: var(--accent-light); text-decoration: none;
+}
+.cvch-panel-foot:hover { text-decoration: underline; }
+
+.cvch-foot { margin-top: 3rem; border-top: 1px solid var(--border); background: rgba(19,19,30,0.5); }
+.cvch-foot-row {
+  display: flex; align-items: center; gap: 1.1rem; flex-wrap: wrap;
+  max-width: 1180px; margin: 0 auto; padding: 0.9rem 1.2rem;
+}
+.cvch-foot-link { font-size: 0.72rem; color: var(--text-secondary); text-decoration: none; }
+.cvch-foot-link:hover { color: var(--text-primary); }
+
+/* Narrow screens keep the mark, the launcher and the account — the three things
+   that are navigation rather than labels — and drop the text links, which the
+   launcher already covers. */
+@media (max-width: 720px) {
+  .cvch-mark-text { display: none; }
+}
+@media (max-width: 560px) {
+  .cvch-text { display: none; }
+  .cvch-bar { gap: 0.6rem !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cvch-spin, .cvch-spin-rev { animation: none; }
+  .cvch-mark:hover .cvch-spin, .cvch-mark:hover .cvch-spin-rev { animation: none; }
+  .cvch-panel { animation-duration: 0.01ms; }
+  .cvch-tile-orb { transition-duration: 0.01ms; }
+}
+
+/* -------------------------------------------------------- CStore / CMail */
+/* Two chrome pages. The aisle and the mail row are both "a whole card is the
+   link", so both need the hover state on the anchor rather than on a child. */
+
+.cstore-aisle {
+  display: block; padding: 1rem 1.05rem; border-radius: 15px;
+  border: 1px solid var(--border); background: var(--bg-card); text-decoration: none;
+}
+.cstore-aisle-top { display: flex; align-items: center; gap: 0.55rem; }
+.cstore-aisle-orb {
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 32px; height: 32px; border-radius: 10px;
+  border: 1px solid var(--border); background: var(--bg-secondary);
+}
+
+.cstore-plan {
+  display: block; padding: 0.95rem 1rem; border-radius: 15px;
+  border: 1px solid var(--border); background: var(--bg-card); text-decoration: none;
+}
+
+.cmail-chip {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.42rem 0.75rem; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--bg-card);
+  font-size: 0.74rem; font-weight: 650; color: var(--text-secondary);
+  cursor: pointer; transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.cmail-chip:hover { background: var(--bg-hover); color: var(--text-primary); }
+.cmail-chip[data-active] { border-color: var(--accent); color: var(--text-primary); background: rgba(124,92,255,0.12); }
+.cmail-count { font-size: 0.66rem; opacity: 0.75; }
+
+.cmail-row {
+  display: flex; align-items: flex-start; gap: 0.7rem;
+  padding: 0.7rem 0.9rem; border-radius: 13px;
+  border: 1px solid var(--border); border-left: 3px solid var(--border);
+  background: var(--bg-card); text-decoration: none;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.cmail-row:hover { background: var(--bg-hover); transform: translateX(2px); }
+/* Unread is a left edge and a weight, not a colour wash — the row still has to
+   be readable when half the inbox is new. */
+.cmail-row[data-new] { background: rgba(124,92,255,0.05); }
+.cmail-row-orb {
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 30px; height: 30px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--bg-secondary); margin-top: 0.1rem;
+}
+.cmail-preview {
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  font-size: 0.75rem; color: var(--text-secondary); line-height: 1.6; margin-top: 0.25rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cmail-row:hover { transform: none; }
+}
+
+/* ------------------------------------------------------------------------- */
+/* CharacterVerse Search — the result-page chrome                            */
+/*                                                                           */
+/* The strip is text first and chrome second, the way a search engine's       */
+/* verticals are: a row of words with one of them underlined. Anything with   */
+/* a pill, a border and a fill around it competes with the results, and the   */
+/* results are the page.                                                      */
+/* ------------------------------------------------------------------------- */
+
+.cvsc-strip {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 2px;
+}
+
+.cvsc-vert {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 11px 9px;
+  margin-bottom: -1px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 12.5px;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.cvsc-vert:hover { color: var(--text-primary); }
+.cvsc-vert[data-active] { color: var(--accent-light); border-bottom-color: var(--accent); }
+
+/* ------------------------------------------------------------------ menus */
+
+.cvsc-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  max-width: calc(100vw - 28px);
+  max-height: min(70vh, 560px);
+  overflow-y: auto;
+  padding: 6px 0 2px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(19, 19, 30, 0.97);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 22px 60px -18px rgba(0, 0, 0, 0.85);
+  z-index: 60;
+  animation: cvscMenuIn 0.14s ease-out;
+}
+
+@keyframes cvscMenuIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: none; }
+}
+
+.cvsc-menu-head {
+  margin: 6px 0 4px;
+  padding: 0 12px;
+  font-size: 9.5px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  opacity: 0.75;
+}
+
+.cvsc-menu-foot {
+  margin: 4px 0 0;
+  padding: 8px 12px 4px;
+  border-top: 1px solid var(--border);
+  font-size: 10px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.cvsc-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 12.5px;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.cvsc-item:hover { background: rgba(124, 92, 255, 0.1); }
+.cvsc-item[data-on] { color: var(--accent-light); }
+.cvsc-item > svg { margin-top: 1px; flex-shrink: 0; }
+
+.cvsc-item-note {
+  display: block;
+  margin-top: 2px;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.cvsc-carry {
+  flex-shrink: 0;
+  align-self: center;
+  font-size: 9.5px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  color: var(--accent-light);
+}
+
+.cvsc-pill {
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.cvsc-pill[data-on] {
+  border-color: var(--accent);
+  background: rgba(124, 92, 255, 0.12);
+  color: var(--accent-light);
+}
+
+/* -------------------------------------------------------- advanced search */
+
+.cvsc-adv {
+  display: grid;
+  gap: 9px;
+  padding: 14px 16px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  max-width: 660px;
+}
+
+.cvsc-adv-x {
+  margin-left: auto;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.cvsc-field { display: flex; align-items: center; gap: 10px; }
+.cvsc-field > span { width: 124px; flex-shrink: 0; font-size: 11.5px; color: var(--text-secondary); }
+
+.cvsc-field input,
+.cvsc-field select {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 12.5px;
+}
+
+.cvsc-adv-prev {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.cvsc-adv-prev code { color: var(--accent-light); font-size: 11.5px; word-break: break-word; }
+
+.cvsc-adv-go {
+  justify-self: start;
+  padding: 7px 18px;
+  border-radius: 999px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cvsc-adv-go:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* --------------------------------------------------------- sponsored slot */
+/* Marked by a label and a rule, not by a coloured box. An ad in a tinted    */
+/* panel looks like a component of the page; an ad under the word Sponsored  */
+/* looks like what it is.                                                    */
+
+.cvsc-ads { display: grid; gap: 14px; max-width: 680px; }
+
+.cvsc-ads-head {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  flex-wrap: wrap;
+  padding-bottom: 9px;
+  border-bottom: 1px solid var(--border);
+}
+
+.cvsc-ads-tag { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.cvsc-ads-sub { flex: 1; min-width: 190px; font-size: 11px; line-height: 1.6; color: var(--text-secondary); }
+
+.cvsc-ads-why {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 10.5px;
+  cursor: pointer;
+  text-decoration: underline dotted;
+}
+
+.cvsc-ads-rules {
+  margin: 0;
+  padding: 10px 14px 10px 28px;
+  border-radius: 10px;
+  background: var(--bg-secondary);
+  font-size: 10.5px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.cvsc-ads-rules a { color: var(--accent-light); }
+
+.cvsc-ad-top { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+.cvsc-ad-host { font-size: 11.5px; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.cvsc-ad-flag {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 1px 5px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+}
+
+.cvsc-ad-title {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 17px;
+  line-height: 1.35;
+  color: var(--accent-light);
+  text-align: left;
+  cursor: pointer;
+}
+
+.cvsc-ad-body { margin: 3px 0 0; font-size: 12.5px; line-height: 1.65; color: var(--text-secondary); }
+.cvsc-ad-note { color: var(--text-primary); }
+.cvsc-ad-foot { display: block; margin-top: 5px; font-size: 10.5px; color: var(--text-secondary); opacity: 0.8; }
+
+/* ----------------------------------------------------------- the explainer */
+
+.cvsc-exp { border-radius: 12px; border: 1px solid var(--border); background: var(--bg-card); overflow: hidden; }
+
+.cvsc-exp-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  padding: 11px 13px;
+  border: none;
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cvsc-exp-head > svg:first-child { margin-top: 2px; flex-shrink: 0; }
+.cvsc-exp-head > svg:last-child { margin-top: 3px; flex-shrink: 0; color: var(--text-secondary); }
+
+.cvsc-exp-kind {
+  display: block;
+  margin-top: 2px;
+  font-size: 10.5px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.cvsc-exp-body { padding: 0 13px 13px; }
+.cvsc-exp-lede { margin: 0 0 10px; font-size: 11.5px; line-height: 1.7; color: var(--text-secondary); }
+
+.cvsc-exp-facts { display: grid; gap: 5px; }
+
+.cvsc-exp-facts > div { display: flex; gap: 10px; font-size: 10.5px; line-height: 1.55; }
+.cvsc-exp-facts > div > span:first-child { width: 74px; flex-shrink: 0; color: var(--text-secondary); }
+.cvsc-exp-facts > div > span:last-child { flex: 1; color: var(--text-primary); }
+
+.cvsc-exp-src { margin: 10px 0 0; font-size: 10.5px; line-height: 1.6; color: var(--text-secondary); }
+.cvsc-exp-src a { color: var(--accent-light); }
+
+.cvsc-exp-sep { height: 1px; margin: 12px 0; background: var(--border); }
+
+.cvsc-exp-label {
+  margin: 0 0 6px;
+  font-size: 9.5px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.cvsc-exp-label:not(:first-child) { margin-top: 13px; }
+
+.cvsc-exp-fan { display: flex; flex-wrap: wrap; gap: 5px; }
+
+.cvsc-exp-fan button {
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.cvsc-exp-fan button span { color: var(--accent-light); }
+.cvsc-exp-ops > div { font-size: 10.5px; line-height: 1.6; color: var(--text-secondary); }
+.cvsc-exp-ops code { color: var(--accent-light); }
+
+/* ---------------------------------------------------------------- the pager
+ *
+ * The reference pager, themed: one ring per page, the brand stretched across
+ * them, the current ring in lilac. The stretched letter is the 'e' of Verse —
+ * the reference stretches the 'o' because its own name has one, and ours does
+ * not. The palette is the site's, not the reference's: grey word, purple rings,
+ * lilac for the page you are on.
+ *
+ * It is one grid with three rows, not three rows that happen to line up:
+ *
+ *   │            "Character"            │   ← centred over the stretched line
+ *   ‹ │ "V" │ e e e … e │ "rse" │ ›
+ *   Previous │     │ 1 2 3 … n │      │ Next
+ *
+ * and the number row reuses exactly those columns, which is what makes the
+ * ring over page 12 sit over the 12 rather than beside it. `--cvsc-rings` is
+ * set inline by the component because only it knows how wide the window came
+ * out; the fallback of 1 keeps the grid valid if it ever renders without.
+ *
+ * Both step columns are held open even when the step does not exist, so the
+ * wordmark is centred on page 1 and on page 40 alike. A pager that spells
+ * something has to stay put to be read.
+ * ------------------------------------------------------------------------- */
+
+.cvsc-pager {
+  display: grid;
+  grid-template-columns:
+    minmax(62px, auto)
+    auto
+    repeat(var(--cvsc-rings, 1), minmax(20px, auto))
+    auto
+    minmax(62px, auto);
+  justify-items: center;
+  align-items: center;
+  column-gap: 1px;
+  row-gap: 1px;
+  padding: 20px 0 6px;
+  user-select: none;
+  /* Sized to its content and centred by its margins rather than by
+   * `justify-content: center`. Same result when it fits, and a different one
+   * when it does not: centred grid content that overflows is clipped on the
+   * left where no scroll can reach it, whereas a fit-content box that hits
+   * max-width just scrolls. Ten rings and a thirteen-letter word is a wide
+   * thing to put in a column somebody else chose. */
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+  overflow-x: auto;
+}
+
+/* The fixed letters. Sized and tracked to sit flush against the rings, so the
+ * row reads as one word rather than as text with circles in it. */
+.cvsc-pager-word {
+  display: inline-flex;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.5px;
+  white-space: pre;
+}
+
+/* The fixed letters are grey so the rings are the only coloured thing in the
+ * word. The brand is not what this row is for — the page you are on is. */
+.cvsc-pager-word { color: var(--text-secondary); }
+
+/* "Character", the half that never changes width, centred over the half that
+ * does.
+ *
+ * Zero-width on purpose. The span sits at the centre of the tracks the
+ * stretched line occupies — "V", the rings, "rse" — and its text overflows
+ * that point evenly in both directions. A span that carried its own width
+ * would push those tracks apart whenever the word was wider than the line
+ * below it (two pages: nine letters against "Veerse"), and rings that do not
+ * touch are not a word. The overflow lands inside the Previous/Next columns,
+ * which are held open anyway, so nothing spills out of the pager. */
+/* Every cell names its own row. The title spans columns, and a spanning item
+ * in row 1 sends grid auto-placement around it — the chevron lands in the last
+ * free cell of row 1 rather than under the title, and the word breaks apart.
+ * Three rows, stated. */
+.cvsc-pager-title { grid-row: 1; }
+.cvsc-pager-step-glyph, .cvsc-pager-word, .cvsc-pager-ring { grid-row: 2; }
+.cvsc-pager-step-cell, .cvsc-pager-gap, .cvsc-pager-n { grid-row: 3; }
+
+.cvsc-pager-title {
+  grid-column: 2 / -2;
+  justify-self: center;
+  display: flex;
+  justify-content: center;
+  width: 0;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.5px;
+  white-space: nowrap;
+  color: var(--text-secondary);
+}
+
+/* A ring — the stretched 'e' of Verse. Purple for a page you could go to,
+ * lilac for the one you are on. */
+.cvsc-pager-ring {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--accent-light);
+  transition: color 0.15s, transform 0.15s, text-shadow 0.15s;
+}
+
+.cvsc-pager-ring[data-on] {
+  /* Lilac — one step lighter than the other rings, and lit, because a step of
+   * lightness alone is a weak signal for anyone reading at a glance. */
+  color: #c9b6ff;
+  text-shadow: 0 0 18px rgba(201, 182, 255, 0.45);
+  /* Scaled as well as recoloured. The current page is signalled three ways —
+   * this, the weight on the number below it, and aria-current — because a page
+   * marked only in lilac is a page some readers are never told they are on. */
+  transform: scale(1.06);
+}
+
+.cvsc-pager-step-glyph { display: inline-flex; color: #8ab4f8; }
+
+/* The chevron is a button, not an ornament.
+ *
+ * It sits against the wordmark for looks and it is the labelled button below
+ * that screen readers and the keyboard use, but anything shaped like a next
+ * arrow gets clicked like one, so it does the step too. The padding is
+ * cancelled by an equal negative margin: the tap target grows, the position
+ * does not move. */
+.cvsc-pager-chev {
+  display: inline-flex;
+  padding: 4px;
+  margin: -4px;
+  border: none;
+  background: none;
+  color: inherit;
+  line-height: 0;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.cvsc-pager-chev:hover { color: var(--text-primary); }
+
+/* The three sizes in this block are one measurement, not three preferences.
+ * A 20px column holds a 28px 'o' (19.3px of glyph, so the rings still touch)
+ * and a bold two-digit number at 12px (16.7px of glyph, so "10" and "11" keep
+ * 3px of air between them). Push the numbers any larger and a double-digit
+ * window reads "1011121314"; push the column any wider and the rings come
+ * apart, and "Charact erV o o o o rse" is not a word. Three digits (page 100
+ * and beyond) do widen the column, which is the right thing to give up last. */
+.cvsc-pager-n {
+  min-width: 20px;
+  padding: 3px 0;
+  border: none;
+  background: none;
+  color: #8ab4f8;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  cursor: pointer;
+}
+
+.cvsc-pager-n:hover { text-decoration: underline; }
+
+/* Not a button in the markup either — you cannot navigate to where you are.
+ * Lilac, the same lilac as the ring above it, so the two read as one mark. */
+.cvsc-pager-n[data-on] {
+  color: #c9b6ff;
+  font-weight: 700;
+  cursor: default;
+  text-decoration: none;
+}
+
+.cvsc-pager-step {
+  padding: 3px 4px;
+  border: none;
+  background: none;
+  color: #8ab4f8;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.3;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.cvsc-pager-step:hover { text-decoration: underline; }
+
+/* The two step columns are wide, so what sits where inside them matters.
+ * The chevron hugs the wordmark and the label hugs the outer edge, which is
+ * how the reference reads: "‹" belongs to the word, "Previous" belongs to the
+ * margin. Both columns stay in the grid even when their step does not exist,
+ * so the word is centred on page 1 and on page 40 alike. */
+.cvsc-pager-step-glyph.cvsc-pager-prev { justify-self: end; padding-right: 6px; }
+.cvsc-pager-step-glyph.cvsc-pager-next { justify-self: start; padding-left: 6px; }
+.cvsc-pager-prev { justify-self: start; }
+.cvsc-pager-next { justify-self: end; }
+
+/* -------------------------------------------------------------- the footer */
+
+.cvsc-foot { margin-top: 8px; padding-top: 14px; border-top: 1px solid var(--border); }
+
+.cvsc-foot p { margin: 0 0 6px; font-size: 11.5px; line-height: 1.7; color: var(--text-secondary); }
+.cvsc-foot-stats { font-size: 10.5px !important; opacity: 0.85; }
+
+.cvsc-foot button {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--accent-light);
+  font: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.cvsc-foot-links { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 10px; }
+.cvsc-foot-links a { font-size: 11.5px; color: var(--text-secondary); text-decoration: none; }
+.cvsc-foot-links a:hover { color: var(--text-primary); text-decoration: underline; }
+
+@media (max-width: 560px) {
+  .cvsc-field { align-items: stretch; flex-direction: column; gap: 4px; }
+  .cvsc-field > span { width: auto; }
+  /* The rings and the fixed letters shrink together, or the word comes apart.
+   * The step columns drop from a 62px floor to 18px: enough for "Character" to
+   * overhang the short line above without being clipped by the scroll box (two
+   * pages is 14px of overhang each side at this size), and no more, because
+   * every px beyond that is a px a ring could have had. */
+  .cvsc-pager {
+    grid-template-columns:
+      minmax(18px, auto)
+      auto
+      repeat(var(--cvsc-rings, 1), minmax(16px, auto))
+      auto
+      minmax(18px, auto);
+    column-gap: 0;
+    /* Three px of shoulder on each side. The chevrons' tap padding bleeds a
+     * pixel past the outer columns, and a scroll container only counts that as
+     * overflow if there is no padding there to land in. */
+    padding-left: 3px;
+    padding-right: 3px;
+  }
+  /* Same measurement as the desktop block, one step down: 16px column, 22px
+   * ring (15.1px of glyph), 10px number (13.9px bold, so 2px of air). The
+   * component also drops the window from ten rings to eight here, which is
+   * what buys the room — ten of these plus the word plus Previous/Next is
+   * 450px of row and a phone has 390. */
+  .cvsc-pager-word, .cvsc-pager-ring, .cvsc-pager-title { font-size: 22px; }
+  .cvsc-pager-n { min-width: 16px; font-size: 10px; }
+  .cvsc-pager-step { font-size: 11px; }
+  /* A finger, not a cursor. Cancelled by its own margin so the arrow stays
+   * exactly where the wordmark wants it, and held at six rather than eight
+   * because the padding box of the outer chevron is what the row overflows
+   * against. Twenty-nine px of target, no 2px of phantom scroll. */
+  .cvsc-pager-chev { padding: 6px; margin: -6px; }
+  .cvsc-pager-step { padding: 3px 0; }
+  .cvsc-pager-step-glyph.cvsc-pager-prev { padding-right: 3px; }
+  .cvsc-pager-step-glyph.cvsc-pager-next { padding-left: 3px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cvsc-menu { animation: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Discover — the encyclopedia half of CharacterVerse Search
+   src/lib/discover-ui.tsx
+
+   Read as a reference article, not as a card: one measured column, a serif-ish
+   rhythm in the leading, an infobox to the right of the lead on wide screens,
+   and numbered references at the foot. It sits above the result rows in the
+   same column, so it borrows their width rather than the rail's.
+
+   Every removable thing wears .cvd-x, and .cvd-x is deliberately quiet until
+   hovered — an article covered in visible delete buttons reads as a form.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.cvd {
+  display: grid;
+  gap: 14px;
+  max-width: 680px;
+  padding: 15px 17px 17px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-card);
+}
+
+.cvd-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-bottom: 11px;
+  border-bottom: 1px solid var(--border);
+}
+
+.cvd-head-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
+}
+
+.cvd-head-note {
+  flex: 1;
+  min-width: 150px;
+  font-size: 10.5px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+/* The removal affordance, everywhere. Low-contrast at rest so the article is
+ * readable as prose, and unmistakable the moment it is reached for. */
+.cvd-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-left: auto;
+  padding: 3px;
+  border: none;
+  border-radius: 5px;
+  background: none;
+  color: var(--text-secondary);
+  opacity: 0.5;
+  cursor: pointer;
+  transition: opacity 0.15s, background 0.15s, color 0.15s;
+}
+
+.cvd-x:hover {
+  opacity: 1;
+  background: rgba(204, 24, 30, 0.12);
+  color: #e0656a;
+}
+
+.cvd-x:focus-visible { opacity: 1; outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* ------------------------------------------------------------ the title */
+
+.cvd-title-block { display: grid; gap: 5px; }
+
+.cvd-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  line-height: 1.25;
+  color: var(--text-primary);
+}
+
+.cvd-sub {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+
+/* ---------------------------------------------------------- the stepper */
+
+.cvd-step {
+  display: flex;
+  gap: 12px;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-secondary);
+}
+
+.cvd-step:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.cvd-step-arrows {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.cvd-step-arrows button {
+  display: flex;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.cvd-step-arrows button:hover:not(:disabled) { color: var(--accent-light); border-color: var(--accent); }
+.cvd-step-arrows button:disabled { opacity: 0.32; cursor: not-allowed; }
+
+.cvd-step-count {
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+.cvd-step-body { flex: 1; min-width: 0; display: grid; gap: 4px; }
+
+.cvd-step-label {
+  margin: 0;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+}
+
+/* Monospaced on purpose: this is the query as typed, and a stray comma or a
+ * trailing operator has to be visible rather than smoothed away. */
+.cvd-step-query {
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+.cvd-step-note { margin: 0; font-size: 11px; line-height: 1.6; color: var(--text-secondary); }
+
+.cvd-step-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+  font-size: 10.5px;
+  color: var(--text-secondary);
+}
+
+.cvd-step-foot button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: none;
+  color: var(--accent-light);
+  font: inherit;
+  font-size: 10.5px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.cvd-step-foot button:hover:not(:disabled) { border-color: var(--accent); background: rgba(124, 92, 191, 0.12); }
+.cvd-step-foot button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ----------------------------------------------------------- the infobox */
+
+.cvd-facts {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-secondary);
+}
+
+.cvd-facts > div { display: flex; gap: 10px; font-size: 10.5px; line-height: 1.6; }
+.cvd-facts dt { width: 96px; flex-shrink: 0; margin: 0; color: var(--text-secondary); }
+.cvd-facts dd { flex: 1; margin: 0; color: var(--text-primary); }
+
+/* On a wide column the infobox floats right of the lead, the way the
+ * reference page does it. Below that it stays in the flow — a 300px box
+ * floated inside a 320px column is just a narrower column. */
+@media (min-width: 900px) {
+  .cvd-facts {
+    float: right;
+    width: 240px;
+    margin: 0 0 12px 18px;
+  }
+  .cvd-article::after { content: ''; display: block; clear: both; }
+}
+
+/* ---------------------------------------------------------- the contents */
+
+.cvd-contents {
+  display: flex;
+  align-items: baseline;
+  gap: 4px 14px;
+  flex-wrap: wrap;
+  padding: 9px 12px;
+  border-left: 2px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+  background: var(--bg-secondary);
+  font-size: 11px;
+}
+
+.cvd-contents > span {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 9.5px;
+  color: var(--text-secondary);
+}
+
+.cvd-contents a { color: var(--accent-light); text-decoration: none; }
+.cvd-contents a:hover { text-decoration: underline; }
+
+/* ----------------------------------------------------------- the article */
+
+.cvd-article { display: block; }
+
+.cvd-sec + .cvd-sec { margin-top: 16px; }
+
+.cvd-sec-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 5px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.cvd-sec-head > svg { flex-shrink: 0; color: var(--text-secondary); }
+
+.cvd-sec-head h3 {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: -0.1px;
+  color: var(--text-primary);
+  cursor: help;
+}
+
+.cvd-sec-flag {
+  padding: 1px 6px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  cursor: help;
+}
+
+.cvd-p {
+  margin: 0 0 9px;
+  font-size: 12.5px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+}
+
+.cvd-p:last-child { margin-bottom: 0; }
+
+/* A citation marker. Superscript, tabular, and a real link into the list at
+ * the foot, because a footnote you cannot follow is decoration. */
+.cvd-cite {
+  vertical-align: super;
+  margin-left: 1px;
+  font-size: 9.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-light);
+  text-decoration: none;
+}
+
+.cvd-cite:hover { text-decoration: underline; }
+
+.cvd-note { margin: 0; font-size: 11.5px; line-height: 1.7; color: var(--text-secondary); }
+
+.cvd-link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent-light);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.cvd-fail {
+  margin: 0;
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-left: 2px solid #8f6b13;
+  border-radius: 0 8px 8px 0;
+  background: var(--bg-secondary);
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+/* -------------------------------------------- see also, and the references */
+
+.cvd-block { display: grid; gap: 8px; }
+
+.cvd-block h3 {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+}
+
+.cvd-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.cvd-chip {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--bg-secondary);
+}
+
+.cvd-chip > button:first-child {
+  padding: 4px 10px;
+  border: none;
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+.cvd-chip:hover { border-color: var(--accent); }
+.cvd-chip > button:first-child:hover { color: var(--accent-light); }
+
+.cvd-chip-x {
+  display: flex;
+  align-items: center;
+  padding: 0 6px 0 4px;
+  border: none;
+  border-left: 1px solid var(--border);
+  background: none;
+  color: var(--text-secondary);
+  opacity: 0.55;
+  cursor: pointer;
+  transition: opacity 0.15s, color 0.15s, background 0.15s;
+}
+
+.cvd-chip-x:hover { opacity: 1; color: #e0656a; background: rgba(204, 24, 30, 0.14); }
+
+.cvd-refs-toggle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cvd-refs-toggle h3 { display: flex; align-items: baseline; gap: 6px; }
+
+.cvd-refs-toggle h3 > span {
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--bg-hover);
+  font-size: 9.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.cvd-refs-toggle > svg { margin-left: auto; flex-shrink: 0; }
+
+.cvd-refs {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cvd-ref { display: flex; gap: 9px; scroll-margin-top: 90px; }
+
+.cvd-ref:target .cvd-ref-n { border-color: var(--accent); color: var(--accent-light); }
+
+.cvd-ref-n {
+  flex-shrink: 0;
+  min-width: 19px;
+  height: 19px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  font-size: 9.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+.cvd-ref-body { flex: 1; min-width: 0; display: grid; gap: 2px; }
+
+.cvd-ref-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.cvd-ref-head > svg { flex-shrink: 0; color: var(--text-secondary); }
+
+.cvd-ref-head a {
+  font-size: 12px;
+  color: var(--accent-light);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cvd-ref-head a:hover { text-decoration: underline; }
+
+/* The provenance label. "the host itself" and "our index" are different kinds
+ * of claim and are coloured differently, because which one a reference is
+ * changes how much weight it carries. */
+.cvd-ref-origin {
+  padding: 1px 6px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 9px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.cvd-ref-origin[data-origin='host'] { border-color: rgba(167, 139, 250, 0.45); color: var(--accent-light); }
+
+.cvd-ref-detail { font-size: 10.5px; line-height: 1.6; color: var(--text-secondary); }
+
+/* -------------------------------------------------------------- the stop */
+
+.cvd-stop {
+  display: grid;
+  gap: 9px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.cvd-stop p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--text-primary);
+}
+
+.cvd-trail { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.cvd-trail button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 11.5px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.cvd-trail button:hover {
+  color: var(--accent-light);
+  border-color: var(--accent);
+  background: rgba(124, 92, 191, 0.1);
+}
+
+.cvd-trail button > svg { flex-shrink: 0; color: var(--accent-light); }
+
+/* ----------------------------------------------------------- the waiting */
+
+.cvd-loading {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 11.5px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.cvd-spin { flex-shrink: 0; color: var(--accent-light); animation: cvd-spin 1s linear infinite; }
+
+@keyframes cvd-spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .cvd-spin { animation: none; }
+}
+
+/* ═════════════════════════════════════════════════ /search — the three engines
+ *
+ * The flip between CharacterVerse Search (chat-based), AgentechVerse Search
+ * (task-based) and SpatialVerse Search (spatial), and each engine's own result
+ * furniture. AgentechVerse and SpatialVerse wear their own accents,
+ * --cvsf-agentech and --cvsf-spatial, set inline from the components'
+ * constants so the component and the stylesheet cannot disagree about them.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+.cvsf-flip {
+  --cvsf-agentech: #4fc3a1;
+  --cvsf-spatial: #ff9d6b;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  max-width: 100%;
+}
+
+.cvsf-face {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border: none;
+  border-radius: 999px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+.cvsf-face small { font-size: 10px; font-weight: 500; opacity: 0.75; margin-left: 2px; }
+.cvsf-face:not([data-on]):hover { color: var(--text-primary); background: var(--bg-hover); }
+.cvsf-face:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.6); }
+.cvsf-face[data-on] { background: var(--accent); color: #fff; cursor: default; }
+.cvsf-face[data-face='agentech'][data-on] { background: var(--cvsf-agentech); color: #0d0d14; }
+.cvsf-face[data-face='spatial'][data-on] { background: var(--cvsf-spatial); color: #0d0d14; }
+
+/* The arriving face swings in on its vertical axis — a page turned over, not
+ * a page replaced. */
+.cvsf-stage { perspective: 1400px; }
+.cvsf-side[data-turned] { animation: cvsfFlipIn 0.42s cubic-bezier(0.2, 0.7, 0.2, 1); transform-origin: 50% 0; }
+@keyframes cvsfFlipIn {
+  from { opacity: 0; transform: rotateY(-78deg); }
+  to   { opacity: 1; transform: none; }
+}
+
+.cvsf-foot-btn {
+  display: inline-flex; align-items: center; gap: 6px; padding: 8px 13px; border-radius: 8px;
+  border: 1px solid var(--border); color: var(--text-secondary); font-size: 12.5px; text-decoration: none;
+}
+.cvsf-foot-btn[data-primary] { border: none; background: #4fc3a1; color: #0d0d14; font-weight: 600; }
+.cvsf-foot-btn[data-primary][data-face='spatial'] { background: #ff9d6b; }
+
+/* AgentechVerse result furniture. */
+.cvat-chip {
+  padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border); background: transparent;
+  color: var(--text-secondary); font: inherit; font-size: 12px; cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.cvat-chip:hover { border-color: rgba(79, 195, 161, 0.55); color: var(--text-primary); }
+
+.cvat-card { padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-card); }
+
+.cvat-badge {
+  display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px; border-radius: 999px;
+  border: 1px solid var(--border); font-size: 10px; color: var(--text-secondary); white-space: nowrap;
+}
+
+.cvat-staff {
+  display: inline-flex; align-items: center; gap: 5px; margin-top: 7px; padding: 3px 9px; border-radius: 999px;
+  border: 1px solid rgba(79, 195, 161, 0.4); color: #4fc3a1; font-size: 11px; font-weight: 600; text-decoration: none;
+}
+.cvat-staff:hover { background: rgba(79, 195, 161, 0.1); }
+.cvat-staff[data-empty] { border-style: dashed; border-color: var(--border); color: var(--text-secondary); font-weight: 500; }
+
+.cvat-cta {
+  display: inline-flex; align-items: center; gap: 4px; padding: 5px 11px; border-radius: 7px;
+  background: rgba(79, 195, 161, 0.14); color: #4fc3a1; font-size: 11.5px; font-weight: 650;
+  text-decoration: none; white-space: nowrap;
+}
+.cvat-cta:hover { background: rgba(79, 195, 161, 0.24); }
+
+/* SpatialVerse result furniture. */
+.cvsp-chip {
+  padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border); background: transparent;
+  color: var(--text-secondary); font: inherit; font-size: 12px; cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.cvsp-chip:hover { border-color: rgba(255, 157, 107, 0.55); color: var(--text-primary); }
+
+.cvsp-card { padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-card); }
+.cvsp-hit { transition: border-color 0.15s ease; }
+.cvsp-hit[data-on] { border-color: rgba(255, 157, 107, 0.6); }
+
+/* A criterion: one piece of the compiled query, removable. */
+.cvsp-crit {
+  display: inline-flex; align-items: center; gap: 5px; padding: 3px 4px 3px 9px; border-radius: 999px;
+  border: 1px solid var(--border); font-size: 11.5px; color: var(--text-secondary);
+}
+.cvsp-crit strong { color: var(--text-primary); font-weight: 600; }
+.cvsp-crit[data-target] { border-color: rgba(255, 157, 107, 0.55); color: #ff9d6b; padding-right: 9px; }
+.cvsp-crit[data-target]:has(.cvsp-crit-btn) { padding-right: 4px; }
+.cvsp-crit-btn {
+  display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 999px; border: none;
+  background: var(--bg-hover); color: var(--text-secondary); cursor: pointer;
+}
+.cvsp-crit-btn:hover { color: var(--text-primary); }
+
+.cvsp-facet {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 7px;
+  border: 1px solid var(--border); background: transparent; color: var(--text-secondary); font: inherit;
+  font-size: 11.5px; cursor: pointer;
+}
+.cvsp-facet span { color: #ff9d6b; font-variant-numeric: tabular-nums; }
+.cvsp-facet:hover, .cvsp-facet[aria-pressed='true'] { border-color: rgba(255, 157, 107, 0.55); color: var(--text-primary); }
+
+/* The breadcrumb: where the thing is, every step of it a narrower search. */
+.cvsp-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 3px; font-size: 11px; color: var(--text-secondary); }
+.cvsp-crumbs button { padding: 0; border: none; background: none; color: inherit; font: inherit; cursor: pointer; }
+.cvsp-crumbs button:hover { color: #ff9d6b; text-decoration: underline; }
+
+.cvsp-hit-title {
+  display: block; margin-top: 4px; padding: 0; border: none; background: none; text-align: left;
+  color: #ff9d6b; font: inherit; font-size: 16px; line-height: 1.35; cursor: pointer;
+}
+.cvsp-badge {
+  display: inline-flex; padding: 0 6px; border-radius: 4px; border: 1px solid var(--border);
+  font-size: 10px; color: var(--text-secondary); text-transform: lowercase;
+}
+.cvsp-check { font-size: 10.5px; padding: 1px 6px; border-radius: 4px; border: 1px solid rgba(248, 113, 113, 0.4); color: #f87171; }
+.cvsp-check[data-ok] { border-color: rgba(79, 195, 161, 0.4); color: #4fc3a1; }
+.cvsp-open {
+  padding: 4px 10px; border-radius: 7px; background: rgba(255, 157, 107, 0.14); color: #ff9d6b;
+  font-size: 11.5px; font-weight: 650; text-decoration: none;
+}
+.cvsp-open:hover { background: rgba(255, 157, 107, 0.24); }
+
+.cvsp-iso polygon { transition: fill-opacity 0.15s ease; }
+.cvsp-iso:hover polygon { stroke: #ff9d6b; }
+/* No drop-shadow on the found box: a CSS filter on an SVG element is measured
+ * in the drawing's own units, and here those are metres. */
+
+@media (max-width: 560px) {
+  .cvsf-face { padding: 5px 8px; font-size: 10.5px; gap: 4px; }
+  .cvsf-face small { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cvsf-side[data-turned] { animation: none; }
+}
+
+/* ══════════════════════════════════════════════════ /cmail — CharacterMail
+ *
+ * Gmail's layout in the verse's dark palette: a top bar with the search, a
+ * sidebar of folders and adopted characters, a list of threads, a reading
+ * pane, and the floating New Message window. Prefixed cm- so it cannot reach
+ * the Notifications Zone's cmail- rules, which are a different page.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+.cm-root { min-height: 100vh; background: var(--bg-primary); display: flex; flex-direction: column; }
+
+.cm-top { display: flex; align-items: center; gap: 12px; padding: 10px 16px; }
+.cm-brand { display: inline-flex; align-items: center; gap: 9px; width: 196px; flex-shrink: 0; text-decoration: none; font-size: 21px; font-weight: 800; letter-spacing: -0.02em; color: var(--text-primary); }
+.cm-brand-mark { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; background: linear-gradient(135deg, #45b8c4, #4f46e5); flex-shrink: 0; }
+.cm-search {
+  flex: 1; max-width: 720px; display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-radius: 999px;
+  background: var(--bg-card); border: 1px solid var(--border); color: var(--text-secondary);
+}
+.cm-search:focus-within { border-color: rgba(167, 139, 250, 0.55); }
+.cm-search input { flex: 1; min-width: 0; border: none; outline: none; background: transparent; color: var(--text-primary); font: inherit; font-size: 14px; }
+.cm-search button { display: flex; border: none; background: none; color: inherit; cursor: pointer; }
+.cm-zone-link {
+  margin-left: auto; display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px;
+  border: 1px solid var(--border); color: var(--text-secondary); font-size: 12px; font-weight: 650; text-decoration: none; white-space: nowrap;
+}
+.cm-zone-link:hover { color: var(--text-primary); background: var(--bg-hover); }
+
+.cm-shell { flex: 1; display: grid; grid-template-columns: 252px 1fr; gap: 8px; padding: 0 16px 16px 4px; min-height: 0; }
+.cm-shell[data-narrow] { grid-template-columns: 68px 1fr; }
+.cm-shell[data-narrow] .cm-folder-label, .cm-shell[data-narrow] .cm-folder-n,
+.cm-shell[data-narrow] .cm-compose span, .cm-shell[data-narrow] .cm-side-head .cm-folder-label { display: none; }
+.cm-shell[data-narrow] .cm-compose { width: 52px; padding: 0; justify-content: center; }
+
+.cm-side { display: flex; flex-direction: column; gap: 2px; padding-top: 4px; min-width: 0; }
+.cm-compose {
+  display: inline-flex; align-items: center; gap: 12px; height: 54px; width: fit-content; margin: 0 0 14px 8px; padding: 0 24px 0 18px;
+  border: none; border-radius: 16px; background: rgba(124, 92, 255, 0.22); color: var(--text-primary);
+  font: inherit; font-size: 14px; font-weight: 650; cursor: pointer; transition: box-shadow 0.15s ease, background 0.15s ease;
+}
+.cm-compose:hover { background: rgba(124, 92, 255, 0.3); box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35); }
+.cm-folders { display: grid; gap: 1px; }
+.cm-folder {
+  display: flex; align-items: center; gap: 16px; height: 32px; padding: 0 12px 0 22px; border: none; border-radius: 0 999px 999px 0;
+  background: none; color: var(--text-secondary); font: inherit; font-size: 13.5px; text-align: left; text-decoration: none; cursor: pointer;
+}
+.cm-folder:hover { background: var(--bg-hover); color: var(--text-primary); }
+.cm-folder[data-on] { background: rgba(124, 92, 255, 0.2); color: var(--text-primary); font-weight: 700; }
+.cm-folder[data-bold] { color: var(--text-primary); font-weight: 700; }
+.cm-folder-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cm-folder-n { font-size: 12px; font-variant-numeric: tabular-nums; }
+.cm-side-head { display: flex; align-items: center; padding: 18px 8px 4px 22px; font-size: 14px; font-weight: 650; color: var(--text-primary); }
+.cm-avatar-sm { width: 16px; text-align: center; font-size: 14px; line-height: 1; }
+
+.cm-iconbtn {
+  display: inline-grid; place-items: center; width: 34px; height: 34px; flex-shrink: 0; border: none; border-radius: 999px;
+  background: none; color: var(--text-secondary); cursor: pointer;
+}
+.cm-iconbtn:hover { background: var(--bg-hover); color: var(--text-primary); }
+.cm-iconbtn:focus-visible, .cm-folder:focus-visible, .cm-pill:focus-visible, .cm-row-open:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.6); }
+
+.cm-main { min-width: 0; }
+.cm-panel { border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border); min-height: calc(100vh - 150px); overflow: hidden; }
+.cm-toolbar { display: flex; align-items: center; gap: 4px; padding: 8px 12px; border-bottom: 1px solid var(--border); min-height: 50px; }
+.cm-range { font-size: 12px; color: var(--text-secondary); }
+.cm-check { width: 16px; height: 16px; margin: 0 9px; accent-color: #a78bfa; cursor: pointer; flex-shrink: 0; }
+.cm-note { margin: 0; padding: 22px 20px; font-size: 13px; color: var(--text-secondary); line-height: 1.7; }
+.cm-link { padding: 0; border: none; background: none; color: var(--accent-light); font: inherit; cursor: pointer; }
+
+.cm-rows { list-style: none; margin: 0; padding: 0; }
+.cm-row { position: relative; display: flex; align-items: center; border-bottom: 1px solid var(--border); background: rgba(255, 255, 255, 0.015); }
+.cm-row[data-unread] { background: rgba(255, 255, 255, 0.05); }
+.cm-row[data-selected] { background: rgba(124, 92, 255, 0.14); }
+.cm-row:hover { box-shadow: inset 1px 0 0 #3a3a56, inset -1px 0 0 #3a3a56, 0 1px 3px rgba(0, 0, 0, 0.4); z-index: 1; }
+.cm-row-open {
+  flex: 1; min-width: 0; display: grid; grid-template-columns: 200px 1fr auto; align-items: center; gap: 14px; height: 42px;
+  padding: 0 16px 0 2px; border: none; background: none; color: var(--text-secondary); font: inherit; font-size: 13.5px; text-align: left; cursor: pointer;
+}
+.cm-row[data-unread] .cm-row-from, .cm-row[data-unread] .cm-row-subject, .cm-row[data-unread] .cm-row-date { color: var(--text-primary); font-weight: 750; }
+.cm-row-from { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-primary); }
+.cm-row-count { margin-left: 5px; font-size: 11.5px; color: var(--text-secondary); font-weight: 500; }
+.cm-row-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cm-row-subject { color: var(--text-primary); }
+.cm-row-snippet { color: var(--text-secondary); }
+.cm-row-date { font-size: 12px; white-space: nowrap; }
+.cm-row-hover { position: absolute; right: 10px; display: none; gap: 2px; background: inherit; }
+.cm-row:hover .cm-row-hover { display: flex; background: #1d1d2e; border-radius: 999px; }
+.cm-row:hover .cm-row-date { visibility: hidden; }
+.cm-draft-tag { color: #f87171; margin-right: 6px; font-weight: 600; }
+.cm-imp { color: #fbbf24; margin-right: 5px; font-weight: 800; }
+
+.cm-star { display: inline-grid; place-items: center; width: 30px; height: 30px; border: none; border-radius: 999px; background: none; color: #6b6b8c; cursor: pointer; flex-shrink: 0; }
+.cm-star:hover { color: var(--text-primary); background: var(--bg-hover); }
+.cm-star[data-on] { color: #fbbf24; }
+.cm-star[data-on] svg { fill: currentColor; }
+
+.cm-pill {
+  display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--border);
+  background: transparent; color: var(--text-primary); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; white-space: nowrap;
+}
+.cm-pill:hover:not(:disabled) { background: var(--bg-hover); }
+.cm-pill[data-primary] { border-color: transparent; background: var(--accent); color: #fff; }
+.cm-pill[data-primary]:hover:not(:disabled) { background: #8b6fd6; }
+.cm-pill:disabled { opacity: 0.55; cursor: default; }
+.cm-chip { display: inline-flex; padding: 1px 7px; border-radius: 5px; background: var(--bg-hover); font-size: 11px; color: var(--text-secondary); }
+
+.cm-character-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 18px; border-bottom: 1px solid var(--border); }
+.cm-character-name { font-size: 16px; font-weight: 750; color: var(--text-primary); }
+.cm-character-sub { font-size: 12px; color: var(--text-secondary); }
+.cm-avatar {
+  display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 999px; flex-shrink: 0;
+  background: var(--bg-hover); font-size: 20px; color: var(--text-primary);
+}
+.cm-avatar[data-me] { background: #7c5cbf; font-size: 16px; font-weight: 700; }
+
+.cm-welcome { display: grid; justify-items: center; gap: 12px; padding: 60px 24px; text-align: center; }
+.cm-welcome h2 { margin: 6px 0 0; font-size: 20px; color: var(--text-primary); }
+.cm-welcome p { margin: 0; max-width: 520px; font-size: 13.5px; line-height: 1.7; color: var(--text-secondary); }
+
+/* The reading pane. */
+.cm-read { padding: 6px 24px 28px 24px; }
+.cm-subject-row { display: flex; align-items: center; gap: 10px; padding: 14px 0 10px 52px; }
+.cm-subject { margin: 0; font-size: 21px; font-weight: 500; color: var(--text-primary); }
+.cm-msg { display: flex; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+.cm-msg-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; font-size: 13.5px; color: var(--text-primary); }
+.cm-msg-to, .cm-msg-date { font-size: 12px; color: var(--text-secondary); }
+.cm-voice { display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px; border-radius: 999px; background: rgba(167, 139, 250, 0.14); color: var(--accent-light); font-size: 11px; }
+.cm-body { margin-top: 10px; font-size: 14px; line-height: 1.7; color: var(--text-primary); white-space: pre-wrap; overflow-wrap: anywhere; }
+.cm-reply { margin: 18px 0 0 52px; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35); background: var(--bg-primary); }
+.cm-reply-to { padding: 10px 14px 0; font-size: 12.5px; color: var(--text-secondary); }
+.cm-reply textarea, .cm-composer-body {
+  width: 100%; min-height: 140px; padding: 10px 14px; border: none; outline: none; resize: vertical; background: transparent;
+  color: var(--text-primary); font: inherit; font-size: 14px; line-height: 1.65; box-sizing: border-box;
+}
+
+.cm-compose-foot { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 12px 12px; }
+.cm-send {
+  display: inline-flex; align-items: center; gap: 6px; padding: 9px 22px; border: none; border-radius: 999px;
+  background: #4f7ae8; color: #fff; font: inherit; font-size: 13.5px; font-weight: 650; cursor: pointer;
+}
+.cm-send:hover:not(:disabled) { background: #6189f0; }
+.cm-send:disabled { opacity: 0.5; cursor: default; }
+.cm-voice-pick {
+  position: relative; display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px;
+  border: 1px solid rgba(167, 139, 250, 0.4); color: var(--accent-light); font-size: 12px; font-weight: 600; cursor: pointer;
+}
+.cm-voice-pick select { appearance: none; border: none; outline: none; background: transparent; color: var(--text-primary); font: inherit; cursor: pointer; padding-right: 2px; }
+.cm-voice-pick select option { background: #1b1b2b; }
+
+/* The floating New Message window. Docked left of the site's TourClaw guide
+ * (fixed bottom-right, 54px, above everything) so the guide never covers Send
+ * or Discard; on a phone it sits above the guide instead. */
+.cm-composer {
+  position: fixed; right: 92px; bottom: 0; z-index: 70; width: min(540px, calc(100vw - 24px)); display: flex; flex-direction: column;
+  border-radius: 12px 12px 0 0; background: #1a1a29; border: 1px solid var(--border); box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+}
+.cm-composer[data-min] { width: 280px; }
+.cm-composer-head { display: flex; align-items: center; gap: 2px; padding: 4px 6px 4px 14px; border-radius: 12px 12px 0 0; background: #23233a; }
+.cm-composer-title { flex: 1; min-width: 0; padding: 6px 0; border: none; background: none; color: var(--text-primary); font: inherit; font-size: 13.5px; font-weight: 650; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+.cm-field { display: flex; align-items: center; gap: 10px; margin: 0 14px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13.5px; color: var(--text-secondary); }
+.cm-field input, .cm-field select { flex: 1; min-width: 0; border: none; outline: none; background: transparent; color: var(--text-primary); font: inherit; font-size: 13.5px; }
+.cm-field select option { background: #1b1b2b; }
+.cm-composer-body { min-height: 260px; }
+.cm-error { margin: 0 14px; font-size: 12px; color: #f87171; }
+.cm-notice { margin: 0 14px; font-size: 12px; color: var(--accent-light); line-height: 1.5; }
+.cm-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.cm-menu {
+  position: absolute; top: calc(100% + 4px); left: 0; z-index: 30; display: grid; min-width: 230px; padding: 6px 0; border-radius: 10px;
+  background: #1f1f31; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+.cm-menu-head { padding: 6px 14px; font-size: 12px; color: var(--text-secondary); }
+.cm-menu button { display: flex; justify-content: space-between; gap: 18px; padding: 8px 14px; border: none; background: none; color: var(--text-primary); font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
+.cm-menu button span { color: var(--text-secondary); font-size: 12px; }
+.cm-menu button:hover { background: var(--bg-hover); }
+
+/* Adoption. */
+.cm-scrim { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 16px; background: rgba(5, 5, 10, 0.65); }
+.cm-dialog { display: flex; flex-direction: column; gap: 10px; width: min(560px, 100%); max-height: min(80vh, 720px); padding: 18px 20px; border-radius: 16px; background: #171725; border: 1px solid var(--border); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6); }
+.cm-dialog-head { display: flex; align-items: center; }
+.cm-dialog-head h2 { flex: 1; margin: 0; font-size: 17px; color: var(--text-primary); }
+.cm-dialog-copy { margin: 0; font-size: 12.5px; line-height: 1.65; color: var(--text-secondary); }
+.cm-dialog-scroll { overflow-y: auto; margin: 0 -6px; padding: 0 6px; }
+.cm-dialog-scroll h3 { margin: 12px 0 6px; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-secondary); }
+.cm-adopt-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.cm-adopt-row { display: flex; align-items: center; gap: 12px; padding: 8px 8px; border-radius: 10px; }
+.cm-adopt-row:hover { background: var(--bg-hover); }
+.cm-adopt-name { display: block; font-size: 13.5px; font-weight: 650; color: var(--text-primary); }
+.cm-adopt-sub { display: block; font-size: 12px; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.cm-toast {
+  position: fixed; left: 24px; bottom: 24px; z-index: 95; max-width: min(460px, calc(100vw - 48px)); padding: 12px 18px; border-radius: 8px;
+  background: #e8e8f5; color: #13131f; font-size: 13.5px; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+}
+
+@media (max-width: 760px) {
+  .cm-shell, .cm-shell[data-narrow] { grid-template-columns: 1fr; padding: 0 8px 12px; }
+  .cm-side { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 4px; }
+  .cm-compose { height: 42px; margin: 0 6px 0 0; }
+  .cm-folders { display: flex; flex-wrap: wrap; gap: 4px; }
+  .cm-folder { height: 30px; padding: 0 10px; gap: 6px; border-radius: 999px; border: 1px solid var(--border); }
+  .cm-side-head { display: none; }
+  .cm-brand { width: auto; }
+  .cm-zone-link span { display: none; }
+  /* The search takes its own line rather than squeezing the bar past the screen. */
+  .cm-top { flex-wrap: wrap; row-gap: 8px; }
+  .cm-search { order: 5; flex: 1 1 100%; min-width: 0; }
+  .cm-row-open { grid-template-columns: 1fr auto; grid-template-rows: auto auto; height: auto; padding: 8px 12px 8px 2px; row-gap: 2px; }
+  .cm-row-text { grid-column: 1 / -1; }
+  .cm-subject-row, .cm-reply { padding-left: 0; margin-left: 0; }
+  .cm-composer { right: 12px; bottom: 84px; border-radius: 12px; max-height: calc(100vh - 110px); overflow-y: auto; }
+  .cm-composer-body { min-height: 160px; }
+}
+
+/* The Notifications Zone's way back to the mailbox. */
+.cmz-go:hover { color: var(--text-primary); background: var(--bg-hover); }
+
+/* ═══════════════════════════════════════════════ SpatialVerse Rooms (rm-)
+ *
+ * The room viewer (src/lib/room-ui.tsx) — in /chat and /twin under the Room
+ * button, full size at /room/:id — and the protocol page at /rooms.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+.rm-card { border-radius: 14px; border: 1px solid var(--border); background: rgba(19, 19, 30, 0.92); backdrop-filter: blur(10px); padding: 12px 14px; display: grid; gap: 10px; }
+.rm-note { padding: 14px; font-size: 12.5px; color: var(--text-secondary); margin: 0; }
+.rm-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.rm-icon { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; background: rgba(167, 139, 250, 0.12); color: var(--text-primary); }
+.rm-title { font-size: 13.5px; font-weight: 750; color: var(--text-primary); }
+.rm-live { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-secondary); }
+.rm-live > span { width: 7px; height: 7px; border-radius: 999px; background: #5a5a7e; }
+.rm-live[data-live] { color: #4fc3a1; }
+.rm-live[data-live] > span { background: #4fc3a1; box-shadow: 0 0 0 0 rgba(79, 195, 161, 0.6); animation: rmPing 1.4s ease-out infinite; }
+@keyframes rmPing { to { box-shadow: 0 0 0 7px rgba(79, 195, 161, 0); } }
+.rm-open { display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--border); color: var(--text-secondary); font-size: 11.5px; font-weight: 650; text-decoration: none; }
+.rm-open:hover { color: var(--text-primary); background: var(--bg-hover); }
+
+.rm-body { position: relative; }
+.rm-svg { width: 100%; height: auto; max-height: 340px; display: block; border-radius: 10px; background: radial-gradient(ellipse at 50% 70%, rgba(79, 195, 161, 0.06), transparent 70%), #0f0f1a; }
+.rm-card:not([data-compact]) .rm-svg { max-height: 460px; }
+.rm-card[data-compact] .rm-svg { max-height: 260px; }
+/* The agent walks: a CSS transform, in the drawing's own units. */
+.rm-agent { transition: transform 0.6s cubic-bezier(0.45, 0, 0.2, 1); }
+.rm-pulse { transform-box: fill-box; transform-origin: center; animation: rmRipple 1.5s ease-out infinite; }
+@keyframes rmRipple { from { opacity: 0.9; transform: scale(1); } to { opacity: 0; transform: scale(2.4); } }
+[data-station] polygon { transition: fill-opacity 0.3s ease, fill 0.3s ease; }
+
+.rm-bubble {
+  position: absolute; left: 10px; bottom: 10px; right: 10px; display: flex; align-items: flex-start; gap: 8px;
+  padding: 7px 11px; border-radius: 10px; border: 1px solid var(--border); background: rgba(13, 13, 22, 0.88);
+  font-size: 12px; color: var(--text-secondary); line-height: 1.5;
+}
+.rm-bubble strong { color: var(--text-primary); }
+.rm-bubble-label { color: var(--text-primary); }
+.rm-dot { flex-shrink: 0; width: 8px; height: 8px; border-radius: 999px; margin-top: 5px; }
+
+.rm-cols { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.rm-card:not([data-compact]) .rm-cols { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); }
+.rm-cols h4 { margin: 0 0 6px; font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-secondary); }
+.rm-feed { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; max-height: 190px; overflow-y: auto; }
+.rm-card[data-compact] .rm-feed { max-height: 112px; }
+.rm-feed li { display: grid; grid-template-columns: 52px auto 1fr; align-items: baseline; gap: 8px; padding: 3px 6px; border-radius: 6px; font-size: 11.5px; color: var(--text-secondary); }
+.rm-feed li[data-on] { background: rgba(167, 139, 250, 0.1); color: var(--text-primary); }
+.rm-feed li[data-phase='error'] .rm-l, .rm-feed li[data-phase='blocked'] .rm-l { color: #f87171; }
+.rm-t { font-variant-numeric: tabular-nums; font-size: 10.5px; color: #6b6b90; text-align: right; }
+.rm-chip { padding: 0 6px; border-radius: 999px; border: 1px solid; font-size: 10px; font-weight: 700; white-space: nowrap; }
+.rm-d { color: #7b7b9e; }
+.rm-legend { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.rm-legend li { display: flex; gap: 8px; padding: 4px 6px; border-radius: 6px; font-size: 11.5px; color: var(--text-secondary); line-height: 1.45; cursor: default; }
+.rm-legend li:hover, .rm-legend li[data-on] { background: var(--bg-hover); }
+.rm-legend strong { color: var(--text-primary); font-weight: 650; }
+
+/* /rooms */
+.rm-doc { max-width: 900px; margin: 0 auto; padding: 2rem 1.1rem 4rem; display: grid; gap: 2rem; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.7; }
+.rm-doc h1 { margin: 0; font-size: 1.8rem; color: var(--text-primary); }
+.rm-doc h2 { margin: 0 0 0.5rem; font-size: 1.1rem; color: var(--text-primary); }
+.rm-doc h3 { margin: 1rem 0 0.35rem; font-size: 0.92rem; color: var(--text-primary); }
+.rm-doc p { margin: 0 0 0.6rem; }
+.rm-lede { margin: 0.25rem 0 0; max-width: 640px; }
+.rm-doc code { padding: 0 4px; border-radius: 4px; background: rgba(167, 139, 250, 0.1); color: var(--accent-light); font-size: 0.82em; }
+.rm-doc pre { margin: 0 0 0.6rem; padding: 0.8rem 1rem; border-radius: 10px; border: 1px solid var(--border); background: #0f0f1a; color: #d8d8ee; font-size: 0.76rem; line-height: 1.6; overflow: auto; white-space: pre; }
+.rm-doc details summary { cursor: pointer; color: var(--accent-light); margin-bottom: 0.5rem; }
+.rm-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.rm-table th, .rm-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.rm-table th { color: var(--text-primary); font-weight: 650; }
+.rm-active { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.rm-active a { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); text-decoration: none; font-size: 0.86rem; }
+.rm-active a span { margin-left: auto; font-size: 0.74rem; color: var(--text-secondary); }
+.rm-active a:hover { border-color: rgba(167, 139, 250, 0.5); }
+
+@media (max-width: 640px) {
+  .rm-card:not([data-compact]) .rm-cols { grid-template-columns: minmax(0, 1fr); }
+  .rm-bubble { position: static; margin-top: 6px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rm-agent { transition: none; }
+  .rm-pulse, .rm-live[data-live] > span { animation: none; }
+}
+
+/* ═══════════════════════════════════════════ /wwb — the Web World Browser page */
+.wwb-page { max-width: 980px; margin: 0 auto; padding: 2.5rem 1.1rem 4rem; display: grid; gap: 2.4rem; color: var(--text-secondary); font-size: 0.92rem; line-height: 1.7; }
+.wwb-hero { display: grid; gap: 0.8rem; }
+.wwb-eyebrow { margin: 0; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent-light); }
+.wwb-hero h1 { margin: 0; font-size: clamp(2rem, 6vw, 3.2rem); font-weight: 800; letter-spacing: -0.03em; color: var(--text-primary); line-height: 1.05; }
+.wwb-hero h1 span { display: block; font-size: 0.5em; letter-spacing: -0.01em; color: var(--accent-light); font-weight: 700; }
+.wwb-lede { margin: 0; max-width: 680px; font-size: 1rem; }
+.wwb-alert { margin: 0; padding: 0.7rem 0.9rem; border-radius: 10px; border: 1px solid rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.08); color: #fcd34d; font-size: 0.85rem; }
+.wwb-downloads { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.4rem; }
+.wwb-dl { display: inline-flex; align-items: center; gap: 0.6rem; padding: 0.65rem 1rem; border-radius: 12px; background: var(--accent); color: #fff; text-decoration: none; }
+.wwb-dl:hover { background: #8b6fd6; }
+.wwb-dl span { display: grid; line-height: 1.25; }
+.wwb-dl small { font-size: 0.7rem; opacity: 0.8; }
+.wwb-fine { margin: 0; font-size: 0.78rem; }
+.wwb-page h2 { display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.6rem; font-size: 1.15rem; color: var(--text-primary); }
+.wwb-page section > p { margin: 0 0 0.6rem; max-width: 760px; }
+.wwb-page code { padding: 0 4px; border-radius: 4px; background: rgba(167, 139, 250, 0.1); color: var(--accent-light); font-size: 0.82em; }
+.wwb-page pre { margin: 0 0 0.6rem; padding: 0.85rem 1rem; border-radius: 10px; border: 1px solid var(--border); background: #0f0f1a; color: #d8d8ee; font-size: 0.78rem; overflow: auto; }
+.wwb-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0.6rem; }
+.wwb-card { padding: 0.8rem 0.95rem; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-card); }
+.wwb-card-head { display: flex; align-items: center; gap: 0.45rem; color: var(--text-primary); flex-wrap: wrap; }
+.wwb-card-head code { margin-left: auto; }
+.wwb-card p { margin: 0.35rem 0 0; font-size: 0.82rem; line-height: 1.6; }
+.wwb-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; margin-bottom: 0.6rem; }
+.wwb-table th, .wwb-table td { padding: 7px 9px; border-bottom: 1px solid var(--border); text-align: left; }
+.wwb-table th { color: var(--text-primary); }
+.wwb-table td[data-v] { font-weight: 700; text-transform: capitalize; }
+.wwb-table td[data-v='yes'] { color: #4fc3a1; }
+.wwb-table td[data-v='partial'] { color: #f59e0b; }
+.wwb-table td[data-v='no'] { color: #f87171; }

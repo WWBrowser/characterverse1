@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CharacterVerse Search</title>
+<!-- WWB's new-tab page: CharacterVerse Search. No script at all — a plain
+     form that submits to CharacterVerse, and its CSP (protocol.rs) lets it
+     submit nowhere else. -->
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background:
+    radial-gradient(ellipse 70% 50% at 50% 12%, rgba(139,111,208,.28), transparent 62%),
+    radial-gradient(ellipse 50% 40% at 15% 70%, rgba(69,184,196,.12), transparent 70%), #0d0d14;
+    color: #e8e8f5; font: 14px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { width: min(680px, 92vw); text-align: center; padding: 6vh 0 10vh; }
+  h1 { margin: 0; font-size: clamp(30px, 6vw, 46px); font-weight: 800; letter-spacing: -1px; }
+  h1 span { color: #a78bfa; }
+  p.lede { margin: 8px auto 26px; max-width: 520px; color: #9090b0; font-size: 13.5px; }
+  .bar { display: flex; gap: 10px; align-items: center; padding: 9px 9px 9px 18px; border-radius: 999px; background: #1a1a2b; border: 1px solid #2d2d45; box-shadow: 0 1px 8px rgba(0,0,0,.3); }
+  .bar:focus-within { border-color: #a78bfa; }
+  input[type=search] { flex: 1; min-width: 0; border: 0; outline: 0; background: none; color: #e8e8f5; font: inherit; font-size: 15.5px; }
+  button { border: 0; border-radius: 999px; padding: 9px 18px; background: #7c5cbf; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+  .faces { display: flex; justify-content: center; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
+  .faces label { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; border: 1px solid #2d2d45; color: #9090b0; font-size: 12px; cursor: pointer; }
+  .faces input { accent-color: #a78bfa; margin: 0; }
+  .faces label:has(input:checked) { color: #e8e8f5; border-color: #a78bfa; background: rgba(124,92,191,.16); }
+  footer { margin-top: 34px; font-size: 11.5px; color: #6b6b90; }
+</style>
+</head>
+<body>
+<main>
+  <h1>CharacterVerse <span>Search</span></h1>
+  <p class="lede">The new tab in WWB is CharacterVerse Search: characters, your chats, and AI systems hosted
+    somewhere else entirely — or, flipped, tasks for agents and things inside 3D spaces.</p>
+  <form action="{{CV_ORIGIN}}/search" method="get" role="search" class="box">
+    <div class="bar">
+      <input type="search" name="q" autofocus required maxlength="400" placeholder="Search characters, agents and spaces" aria-label="Search CharacterVerse">
+      <button type="submit">Search</button>
+    </div>
+    <!-- The three engines of /search (search.index.tsx `?verse=`), chosen before submitting. -->
+    <div class="faces" role="radiogroup" aria-label="Which engine">
+      <label><input type="radio" name="verse" value="" checked> CharacterVerse · chat</label>
+      <label><input type="radio" name="verse" value="agentech"> AgentechVerse · tasks</label>
+      <label><input type="radio" name="verse" value="Spatial"> SpatialVerse · spaces</label>
+    </div>
+  </form>
+  <footer>WWB — Web World Browser · built on Servo, not Chromium · HTTPS-only by default</footer>
+</main>
+</body>
+</html>

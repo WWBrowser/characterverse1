@@ -1,0 +1,54 @@
+# Security headers, served by Netlify from dist/client/_headers.
+#
+# Two rules about this file. First: every header here is a browser-enforced
+# boundary, so it is the one layer that keeps working when the application
+# code is wrong. Second: one declaration per feature. Netlify merges the
+# headers of every matching rule, and a feature named twice — once denied,
+# once allowed — resolves in a way that differs by browser. So the policy
+# below is stated once, under /*, and nothing overrides it per path.
+
+/*
+  # Who may put our pages in a frame: only us. The workspace embeds its own
+  # chat panes and that is same-origin, so it keeps working. A third-party
+  # site that should be allowed to embed a chat page goes in frame-ancestors
+  # by name — there is no header that means "anyone I trust" without naming
+  # them. X-Frame-Options repeats it for anything that predates CSP.
+  Content-Security-Policy: frame-ancestors 'self'
+  X-Frame-Options: SAMEORIGIN
+
+  # A response labelled text/plain is text/plain. Without this, a browser is
+  # free to decide an uploaded avatar is really HTML and run it as our origin.
+  X-Content-Type-Options: nosniff
+
+  # Outbound links and oframe hand-offs carry our origin, never the path. The
+  # index's URLs are public, but which entry someone opened, and the query
+  # that led there, are not the host's business.
+  Referrer-Policy: strict-origin-when-cross-origin
+
+  # A page we open with target=_blank cannot reach back through window.opener.
+  # allow-popups is the variant that keeps the hand-off working: the popup
+  # opens, it just opens severed.
+  Cross-Origin-Opener-Policy: same-origin-allow-popups
+
+  # Capability floor. The nine features below are denied outright — no page of
+  # ours uses them, and denial here means an embedded frame cannot obtain them
+  # even if someone manages to write an allow attribute for one.
+  #
+  # The four delegatable features stay at (self): our own pages may use them,
+  # and an embedded frame receives one only through the allow attribute the
+  # viewer turned on. That is the third gate — publisher declares, viewer
+  # toggles, browser asks — and it only works if the floor does not already
+  # deny the feature. Adding a feature to FRAME_FEATURES in searchindex.ts
+  # means moving it out of the deny list here.
+  Permissions-Policy: camera=(), geolocation=(), payment=(), usb=(), serial=(), bluetooth=(), midi=(), display-capture=(), xr-spatial-tracking=(), microphone=(self), clipboard-write=(self), fullscreen=(self), autoplay=(self)
+
+  # Explicitly off. The legacy XSS auditor introduced its own vulnerabilities
+  # and 0 is the value that disables it rather than the value that omits it.
+  X-XSS-Protection: 0
+
+# No script-src/default-src CSP here. The app inlines styles throughout and
+# TanStack Start's SSR hydration emits inline script, so a real CSP needs
+# nonces threaded through the server render — and this environment cannot run
+# a build to prove the result still boots. A CSP that ships broken is worse
+# than no CSP, so this stops at frame-ancestors, which is the part that needs
+# no nonces and carries the framing decision.

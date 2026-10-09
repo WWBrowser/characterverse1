@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- WWB's interface. Rendered by Servo in its own webview at wwb://ui/, which
+     no page can open and whose responses no script can read. The token below
+     is this launch's; it authorises commands to the engine (protocol.rs). -->
+<meta name="wwb-token" content="{{WWB_TOKEN}}">
+<meta name="wwb-cv" content="{{CV_ORIGIN}}">
+<title>WWB</title>
+<link rel="stylesheet" href="ui.css">
+<script src="ui.js" defer></script>
+</head>
+<body>
+  <header class="strip">
+    <!-- The tab strip — /workspace's: one row, every kind of tab in it. -->
+    <div class="tabs" role="tablist" aria-label="Tabs">
+      <div id="tab-list" class="tab-list"></div>
+      <button id="new-tab" class="icon-btn" title="New tab (Ctrl+T)" aria-label="New tab">+</button>
+    </div>
+    <!-- Notices live in the strip itself: the UI webview only owns these 84px. -->
+    <div id="notice" class="notice" role="status" hidden></div>
+    <div class="strip-tools">
+      <button id="open-search" class="tool" title="CharacterVerse Search" aria-label="Open CharacterVerse Search">Search</button>
+      <button id="open-index" class="tool" title="Tab index" aria-label="Tab index" aria-pressed="false">Index <span id="tab-count" class="count">0</span></button>
+    </div>
+  </header>
+
+  <nav class="toolbar" aria-label="Navigation">
+    <button id="back" class="icon-btn" title="Back (Alt+←)" aria-label="Back">‹</button>
+    <button id="forward" class="icon-btn" title="Forward (Alt+→)" aria-label="Forward">›</button>
+    <button id="reload" class="icon-btn" title="Reload (Ctrl+R)" aria-label="Reload">↻</button>
+
+    <div class="omnibox" id="omnibox">
+      <button id="lock" class="lock" title="Connection and HTTPS-only" aria-label="Connection security" aria-haspopup="dialog"></button>
+      <input id="address" type="text" spellcheck="false" autocomplete="off"
+             placeholder="Search CharacterVerse, or type an address"
+             aria-label="Search CharacterVerse or type an address" aria-autocomplete="list" aria-controls="suggestions">
+      <button id="bookmark" class="icon-btn star" title="Bookmark this page" aria-label="Bookmark this page" aria-pressed="false">☆</button>
+    </div>
+
+    <button id="menu" class="icon-btn" title="Menu" aria-label="Menu" aria-haspopup="dialog">≡</button>
+  </nav>
+
+  <!-- Overlays. While one is open the engine gives this webview the whole
+       window (the page is not painted underneath), so they can be full-size. -->
+  <section id="suggestions" class="overlay" role="listbox" aria-label="Suggestions" hidden></section>
+  <section id="index" class="overlay" aria-label="Tab index" hidden></section>
+  <section id="lock-panel" class="overlay panel" role="dialog" aria-label="Connection security" hidden></section>
+  <section id="menu-panel" class="overlay panel" role="dialog" aria-label="Menu" hidden></section>
+
+</body>
+</html>

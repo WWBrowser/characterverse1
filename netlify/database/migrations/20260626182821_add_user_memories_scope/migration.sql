@@ -1,0 +1,1 @@
+ALTER TABLE "user_memories" ADD COLUMN "scope" text DEFAULT 'general' NOT NULL;

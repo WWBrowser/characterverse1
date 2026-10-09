@@ -1,0 +1,62 @@
+[package]
+name = "wwb"
+description = "WWB — Web World Browser: CharacterVerse's own web browser, built on the Servo engine (not Chromium)."
+version = "0.1.0"
+edition = "2024"
+# Servo 0.7.0's own floor.
+rust-version = "1.88.0"
+license = "MPL-2.0"
+publish = false
+
+[[bin]]
+name = "wwb"
+path = "src/main.rs"
+
+[dependencies]
+# The execution layer: Servo — HTML/CSS parsing, the DOM, Stylo, layout,
+# WebRender, the SpiderMonkey JavaScript engine (JIT), and Servo's networking
+# stack (hyper + rustls). Pinned exactly: Servo's embedding API is still
+# pre-1.0 and changes between releases, and this code is written against 0.7.0.
+servo = { version = "=0.7.0", default-features = false, features = [
+    "bundled",       # baked-in resources + bundled FreeType
+    "clipboard",
+    "js_jit",        # SpiderMonkey's JIT tiers
+    "multiprocess",  # one content process per site group — the sandbox's precondition
+    "webcrypto",
+    "webgl",
+] }
+
+# Versions below are the ones Servo 0.7.0 itself resolves, so the dependency
+# graph carries exactly one copy of each.
+winit = "0.30.13"
+euclid = "0.22.14"
+url = "2.5.8"
+keyboard-types = "0.8.3"
+rustls = { version = "0.23.45", default-features = false, features = ["aws_lc_rs"] }
+http = "1.4"
+# Data persistence for WWB's own state (tabs, history, bookmarks). The same
+# rusqlite and bundled SQLite that Servo's networking already links.
+rusqlite = { version = "0.38", features = ["bundled"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+dirs = "6"
+getrandom = "0.3"
+tracing = "0.1.44"
+
+[target.'cfg(windows)'.dependencies]
+# Process mitigations for content processes — Servo's own sandbox (gaol) does
+# not cover Windows, so WWB applies what Windows offers itself. See SECURITY.md.
+windows-sys = { version = "0.60", features = [
+    "Win32_Foundation",
+    "Win32_Security",
+    "Win32_System_JobObjects",
+    "Win32_System_SystemServices",
+    "Win32_System_Threading",
+] }
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+# A browser that panics must not unwind into a half-torn-down engine.
+panic = "abort"
+strip = "debuginfo"
