@@ -4,7 +4,7 @@
 # and the packages are kept as workflow artifacts. A tag `wwb-v*` (wwb-v0.1.0)
 # also publishes them to a GitHub Release, which is where CharacterVerse's
 # /wwb download buttons point (set WWB_DOWNLOAD_BASE on the site to
-# https://github.com/<owner>/<repo>/releases/latest/download).
+# https://github.com/WWBrowser/characterverse1/releases/latest/download).
 #
 # Servo is a large build: expect 25–45 minutes per platform the first time,
 # far less with the cache warm.
