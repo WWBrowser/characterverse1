@@ -1,0 +1,147 @@
+# WWB — Web World Browser: build, test and package on every platform.
+#
+# Every push that touches wwb/ is built and tested on Linux, macOS and Windows,
+# and the packages are kept as workflow artifacts. A tag `wwb-v*` (wwb-v0.1.0)
+# also publishes them to a GitHub Release, which is where CharacterVerse's
+# /wwb download buttons point (set WWB_DOWNLOAD_BASE on the site to
+# https://github.com/<owner>/<repo>/releases/latest/download).
+#
+# Servo is a large build: expect 25–45 minutes per platform the first time,
+# far less with the cache warm.
+
+name: WWB
+
+on:
+  push:
+    paths: ["wwb/**", ".github/workflows/wwb.yml"]
+    tags: ["wwb-v*"]
+  pull_request:
+    paths: ["wwb/**", ".github/workflows/wwb.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wwb-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: linux-x86_64, os: ubuntu-24.04, bin: wwb, pkg: wwb-linux-x86_64.tar.gz }
+          - { name: macos-arm64, os: macos-14, bin: wwb, pkg: wwb-macos-arm64.zip }
+          - { name: windows-x86_64, os: windows-2022, bin: wwb.exe, pkg: wwb-windows-x86_64.zip }
+    defaults:
+      run:
+        shell: bash
+        working-directory: wwb
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Free disk space (Linux)
+        if: runner.os == 'Linux'
+        # Servo's build tree runs to many gigabytes; the hosted image's unused
+        # SDKs are the easiest room to make.
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+
+      - name: System libraries (Linux)
+        if: runner.os == 'Linux'
+        # What Servo needs to build and draw on Linux: GL/EGL, X11 + Wayland via
+        # winit, fonts, and clang for SpiderMonkey's bindings.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            clang llvm libclang-dev python3 cmake pkg-config \
+            libgl1-mesa-dev libegl1-mesa-dev libgles2-mesa-dev \
+            libx11-dev libx11-xcb-dev libxcb1-dev libxkbcommon-dev libxkbcommon-x11-dev \
+            libwayland-dev libfontconfig1-dev libfreetype6-dev libharfbuzz-dev libudev-dev
+
+      - name: LLVM (Windows)
+        if: runner.os == 'Windows'
+        run: choco install llvm --no-progress -y
+
+      - name: Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            wwb/target
+          key: wwb-${{ matrix.name }}-${{ hashFiles('wwb/Cargo.toml', 'wwb/Cargo.lock') }}
+          restore-keys: wwb-${{ matrix.name }}-
+
+      - name: Test
+        run: cargo test --release --locked || cargo test --release
+
+      - name: Build
+        run: cargo build --release --locked || cargo build --release
+
+      - name: Package
+        run: |
+          mkdir -p dist/WWB
+          cp target/release/${{ matrix.bin }} dist/WWB/
+          cp README.md SECURITY.md dist/WWB/
+          cd dist
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            tar -czf ${{ matrix.pkg }} WWB
+          elif [ "${{ runner.os }}" = "macOS" ]; then
+            # A minimal .app bundle around the binary.
+            mkdir -p "WWB.app/Contents/MacOS"
+            cp WWB/wwb "WWB.app/Contents/MacOS/wwb"
+            cat > "WWB.app/Contents/Info.plist" <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>CFBundleName</key><string>WWB</string>
+            <key>CFBundleDisplayName</key><string>WWB — Web World Browser</string>
+            <key>CFBundleIdentifier</key><string>app.characterverse.wwb</string>
+            <key>CFBundleExecutable</key><string>wwb</string>
+            <key>CFBundlePackageType</key><string>APPL</string>
+            <key>CFBundleShortVersionString</key><string>0.1.0</string>
+            <key>NSHighResolutionCapable</key><true/>
+          </dict></plist>
+          PLIST
+            ditto -c -k --keepParent "WWB.app" ${{ matrix.pkg }}
+          else
+            7z a ${{ matrix.pkg }} WWB > /dev/null
+          fi
+          # A checksum beside every package, so a download can be verified.
+          if command -v sha256sum >/dev/null; then sha256sum ${{ matrix.pkg }} > ${{ matrix.pkg }}.sha256
+          else shasum -a 256 ${{ matrix.pkg }} > ${{ matrix.pkg }}.sha256; fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: |
+            wwb/dist/${{ matrix.pkg }}
+            wwb/dist/${{ matrix.pkg }}.sha256
+
+  release:
+    name: Publish release
+    if: startsWith(github.ref, 'refs/tags/wwb-v')
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { path: dist, merge-multiple: true }
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: WWB ${{ github.ref_name }}
+          files: dist/*
+          body: |
+            WWB — Web World Browser. Built on Servo (not Chromium).
+            Verify a download with its .sha256 file. These builds are unsigned:
+            macOS will ask you to confirm the first launch, and Windows SmartScreen
+            may warn until the publisher is code-sign
