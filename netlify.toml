@@ -1,5 +1,7 @@
 [build]
-  command = "vite build"
+  # Install first: some deploy paths run the build without installing
+  # dependencies, which leaves `vite` off the PATH.
+  command = "npm install --include=dev --no-audit --no-fund && npm run build"
   publish = "dist/client"
 [dev]
   command = "npm run dev"

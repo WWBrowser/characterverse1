@@ -57,3 +57,15 @@ src/styles.css              # Dark theme CSS custom properties + typography
 | AI | Anthropic Claude via Netlify AI Gateway + TanStack AI |
 | Database | Netlify Database + Drizzle ORM @beta |
 | Deployment | Netlify |
+
+## Vision & Roadmap
+
+Planned work — payments, boosters, licences, the Workspace OS, the Forge
+economy, the agent web protocols (HTMLA / HTTPAS / ARN / HCS / EALA) and the
+Table / Pen Test Poker — is recorded in [`docs/vision/`](docs/vision/README.md).
+Most of it is design, not code; each document marks what exists vs planned.
+
+- Start with [`docs/vision/README.md`](docs/vision/README.md) for the
+  principles every feature is checked against.
+- Build order: [`docs/vision/roadmap.md`](docs/vision/roadmap.md).
+- Fix first: [`docs/vision/known-issues.md`](docs/vision/known-issues.md).
