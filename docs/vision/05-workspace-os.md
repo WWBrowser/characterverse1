@@ -117,3 +117,52 @@ An **orphan list** beside `VERSES` (description + nearest Verse) lets TourClaw
 explain them. Record orphan visits/questions (no personal content) to decide
 adopt vs retire. **Coverage test:** every route is on the wheel, in the bar, a
 detail page with a parent, or on the orphan list.
+
+## TourClaw shop — capabilities and extensions
+
+Compared with HeyClicky (cursor-side voice assistant with screen guidance and
+background agents; Free / Pro $20 / Max $100 by message counts — as described,
+not verified). WWB is the natural home; desktop-wide later.
+
+| Kind | Made by | Examples |
+|---|---|---|
+| **Capabilities** | Us — unlocked by plan, booster or gas | 🗣️ Voice · 🖱️ Show me highlights · 👁️ Screen guide (WWB) · 🛰️ Background agents · 🧭 Cross-Verse directions |
+| **Extensions** | Third parties via Forge/ThoughtHub | Guide packs per app/site · Gmail/Notion/calendar via OAuth · 🦯 accessibility pack (Agent Eyes) · language packs |
+
+Pricing: the text guide stays free forever; capabilities by tier or as
+boosters, token-heavy ones metered by gas; extensions priced by makers with
+royalties; cheap capabilities may enter the Goodwill pool.
+
+Rules: screen viewed **only on explicit trigger** with a visible indicator;
+per-site permission, never banking/password/health pages unless allowed; no
+kept screenshots; background agents follow reverse-action rules and ask before
+spending or sending; extensions declare permissions ("requests, not grants"),
+run sandboxed, are reviewed, signed (HCS) and revocable, with update scans;
+TourClaw always identifies as AI.
+
+Code (○): `src/lib/tourclaw/capabilities.ts`, `tour_extensions`,
+`member_extensions`, gas metering in the TourClaw API, WWB screen-guide capture
+and highlight bridge, a CStore aisle.
+
+### Personal guides
+
+"Adopt as my guide" on character pages, Codex dossiers and TourClaw settings:
+**TourClaw's knowledge, your character's personality** (built like
+`buildSatellitePrompt()`). Facts, directions, prices and permissions still
+come from the server; honesty and the attention charter sit above the persona;
+the character's licence must allow adoption (fallback to default TourClaw);
+guide sessions use their own memory lane and never enter Punk Records; own-
+character use doesn't count as merit; creators can earn if commercial use is
+allowed; a short cached voice summary keeps cost down.
+`tourclaw_character_id` member setting; header "🧭 Xio · Following you · …".
+
+### Twin guides (TourClaw Edition)
+
+Adopting a twin (`characters.twinId`) gives two guides in Together Chat style:
+a **navigator** (server route) and an **explainer** (why and tips), or "two
+takes" mode. One route always; the second voice speaks only when it adds
+something or is asked (@Byte); one turn each, no AI-to-AI loop unless started;
+both licences required; same privacy rules; speaker names on every reply, two
+distinct voices, and a single-guide switch. Twin mode as a shop capability;
+earnings split between creators. `tourclaw_twin_id`; reuses the Twin Chat
+pipeline.

@@ -19,13 +19,15 @@ what is planned, so nobody mistakes a plan for a feature.
 | 5 | [Workspace OS](05-workspace-os.md) | Fold Tabs, Nesting Dolls, Enterprise doll, Search as the front page, Seven Entrances "you are here" wheel, TourClaw, orphan pages |
 | 6 | [Forge economy](06-forge.md) | Shared brick bucket, duplicates and variants, royalties, RWA weights, fusion, FusionClaw, salvage yard, collaborative projects |
 | 7 | [Agent web](07-agent-web.md) | WWB, HTMLA / HTTPAS, rollout phases, AI certificates, ARN, HELIX Certificate Security, EALA, sentinels, REA / RevClaw |
-| 8 | [The Table](08-table.md) | Multi-model `@mention` rooms, AI-to-AI metering life cycle, team table, Pen Test Poker, spin-out and boomerang |
+| 8 | [The Table](08-table.md) | Multi-model `@mention` rooms, AI-to-AI metering life cycle, bring your own table, team table, Pen Test Poker, spin-out and boomerang |
+| 9 | [ThoughtHub](09-thoughthub.md) | GitHub + Hugging Face for character thought, herd view, WAT signatures, Hugging Face public square, Think mode, agentic sub-conscience, P@B, YEY!, NaR, RLSF, NFaNF, notes archive and categories, frontier |
+| 10 | [WebWorld](10-webworld.md) | SpatialVerse worlds and sub-worlds, the open-standard play, shared spatial dictionary, `spatial.md`, the Listening Room, Agent Eyes |
 | — | [Known issues](known-issues.md) | Security and coherence gaps found in the current code |
 | — | [Roadmap](roadmap.md) | Build order |
 
 ## Principles
 
-Quotes by Robert W Dickson that frame the design:
+Quotes by Robert W Dickson that frame the design (the TourClaw shop and personal guides are in [Workspace OS](05-workspace-os.md)):
 
 > *"Dopamine is so big that we could never hope to map it fully as new spikes
 > lead to new branches of subjective want, like, understanding that no other
@@ -65,6 +67,12 @@ The rules that follow from them, used as tests for every new feature:
 10. **Intelligence as a Service:** raw intelligence at cost, earned intelligence
     at a premium, goodwill as the baseline. (Write "Intelligence as a Service"
     out in full — "IaaS" already means Infrastructure as a Service.)
+11. **Show the trick, don't sell the soul.** Explain how agents work; never
+    claim feelings or awareness that can't be known, and never claim they're
+    impossible either. Label metaphors like "consciousness" in the UI.
+12. **Dissipate heat through good contextualized systems (DHTGCS).** Give each
+    task the context it needs and nothing it doesn't: cool where it's known,
+    spend tokens where it's new.
 
 ## Advice still needed
 
