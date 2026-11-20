@@ -166,3 +166,241 @@ both licences required; same privacy rules; speaker names on every reply, two
 distinct voices, and a single-guide switch. Twin mode as a shop capability;
 earnings split between creators. `tourclaw_twin_id`; reuses the Twin Chat
 pipeline.
+
+## TC-Link — the information desk for web apps
+
+Like a mall directory, a town information centre or a park ranger, but for web
+apps: a TourClaw guide any partner site, app or WebWorld can plug in, with
+answers served by the TourClaw service.
+
+| Information centre | TC-Link |
+|---|---|
+| "You are here" board | `whereAmI`, live wheel pin |
+| Entrance map | Partner's `tourclaw.md` site map (its current almanac edition) |
+| Person at the desk | TourClaw, or a licensed character / twin pair |
+| "How do I get to…?" | Checked directions, real pages only |
+| Leaflets | Guide packs and extensions |
+| "Closed today" | Signal-box status |
+| Lost and found | Orphan pages |
+
+A desk, not a salesperson; knows its own building ("I don't know, here's who to
+ask"); there when you walk up. Tagline: *"the information desk for your web app."*
+
+**Flow:** partner embeds a widget script with a public site key → questions go
+to a TC-Link endpoint → TourClaw prompt + partner map → AI Gateway → answer
+with checked directions, gas billed to the partner.
+
+**Honest notes:** there is no separate "TourClaw model" — it's a service
+(prompt + maps + checks + metering) on `claude-haiku-4-5`, so partner usage
+counts against our gateway credits and rate limits; keep it a guide service,
+not an open chat API (provider terms). **Name:** "TC-Link" is one letter from
+the TP-Link trademark; use TourClaw Link / TourLink publicly after a trademark search.
+
+**Safety and sustainability:** public site keys locked to partner domains plus
+secret server keys, revocable; per-site and per-visitor rate limits and on-topic
+answers; prepaid credits or a plan, small free tier; partner map and page text
+treated as data, never instructions; a data processing agreement (UK/EU GDPR),
+no visitor data in Punk Records or training; always labelled AI ("powered by
+TourClaw"); widget hides gracefully if the service is down.
+
+**On Netlify:** endpoint as a server route (e.g. `src/routes/api.tclink.ts`)
+with CORS per partner domain; key checks and rate limits in an Edge Function in
+front; widget as a static script.
+
+### White label and pop-out
+
+Today TourClaw is a fixed paw button bottom-right on every page
+(`src/components/TourClaw.tsx`, mounted in `__root.tsx`) — always visible, so
+people tap it without needing help, which costs gas.
+
+**White-label settings (partner):** name, icon (paw, compass, logo, text),
+colours, position (corner or inline), launcher style (floating button, "Help"
+link, shortcut only, none), guide character, greeting and starter questions.
+**Cannot be hidden:** that it's AI, and "powered by TourClaw".
+
+**Modes:** docked page (`/guide` or the partner's URL), pop-out (opened from a
+Help link or shortcut, can pop back into the page), floating (opt-in only).
+Default becomes "out of the way". The conversation persists across modes and
+still knows the page you came from.
+
+**Apply to CharacterVerse too:** move TourClaw to a Help entry in the VerseChrome
+bar and Seven Entrances launcher plus a `/guide` page; floating button as a user
+setting. Split `TourClaw.tsx` into panel + launcher. Gauge: questions per
+visitor and share ending in a followed direction (help vs idle chat).
+
+Settings table `tclink_sites` (name, icon, colours, position, launcher mode,
+guide, greeting, domains, keys).
+
+## Page Almanac
+
+A companion to TourClaw and TC-Link listing every page and how it changed,
+year by year — replacing TourClaw's stale hand-written site map.
+
+- **Generated at deploy time** from `src/routeTree.gen.ts`, `VERSES`/`whereAmI`,
+  the orphan list and git/deploy history. The coverage test also requires an
+  almanac entry per route.
+- **Entry:** page, place (Verse › page / bar / orphan + nearest Verse), purpose,
+  status (🆕 new · ✏️ changed · ➡️ moved · 🗄️ retired), history with dated
+  notes, visibility (public / members / enterprise-admin).
+- **Editions:** a live edition per deploy; an annual sealed edition
+  ("CharacterVerse Almanac 2026") with a digest; "what's new" this month/year.
+  Changes are added, never overwritten.
+- TourClaw looks up only relevant entries (DHTGCS); TC-Link partners publish
+  their own almanac as `tourclaw.md`.
+- Private/admin pages are shown only to people allowed to see them; every entry
+  comes from the route tree, so it can't list a page that doesn't exist.
+- Code (○): `src/lib/almanac.ts`, generated JSON per edition (or
+  `almanac_entries` / `almanac_changes`), a `/almanac` page.
+
+### Almanac redirects — link rot becomes redirects
+
+"Moved" entries generate redirect rules (`netlify.toml` / `_redirects`) at
+deploy, keeping address options (`/workspace?slate=abc` → `/?slate=abc`) and
+dynamic IDs.
+
+| Destination | Result |
+|---|---|
+| Active | 301 straight there |
+| Moved again | Collapsed to the final page in one hop — no chains |
+| Retired with a successor | Redirect to the successor, with a note |
+| Retired, no successor | **410 Gone** almanac page: what it was, when it closed, what to try |
+| Temporarily moved | 302 |
+
+The build fails if a redirect target isn't in the route tree. TourClaw explains
+the hop ("moved to Jobs › Gig Board in March 2026"). Partners install their own
+redirects on their domain; TourClaw on their site can still explain moves.
+Gauge old-link use; unused links can retire to 410 after a long period (e.g. 2 years).
+
+### Page Dossier — TourClaw Advanced view
+
+Mirrors the Codex Simple/Advanced toggle (`AdvancedViewToggle`, `DossierCard`
+in `src/lib/character-codex.tsx`). Simple shows the route; Advanced shows each
+step as a **Page Dossier** card — place, purpose, status, added/changed dates,
+redirects in and out, health, how often it's asked about — and **ADVANCED
+VIEW** opens the full almanac entry.
+
+- Derived, not stored (`src/lib/page-dossier.ts`, pure like `buildDossier()`).
+- Badges: On the map · Accessible · Agent actions · Stable; warnings: Redirect
+  chain · Often asked about.
+- Counts only, never question content; visibility respected; off by default.
+- For partners, Advanced shows where visitors get lost, which old links still
+  bring traffic, and where directions fail.
+
+## MyCustom Menu — menu mapping
+
+Like console button mapping, for menus. Menus already come from one list
+(`VERSES`), so MyCustom Menu is a personal layer on top.
+
+| Console | MyCustom Menu |
+|---|---|
+| Swap buttons | Reorder Verses and pages |
+| Rename in a profile | Your own labels ("Gigs" for Gig Board) |
+| Disable a button | Hide items |
+| Shortcut combos | Keyboard shortcuts |
+| Quick-access slot | Pins on the thin bar |
+| Profiles | Presets (Creator, Job hunter, Minimal) |
+| Share a layout | Share a preset as a link |
+| Reset | One click |
+
+**Why:** a disorganised menu kills a business for subjective reasons — people
+can't get behind a layout even when it's logical. *The customer is always right
+in matters of taste.* Defaults must still be the best we can make (most people
+never customise); aggregate remaps can suggest default changes (counts only,
+human decides); taste, not safety.
+
+**Rules:** map only, never invent — real destinations only (no spoke to
+nowhere). **Anything else belongs in the Workspace**, which holds outside
+systems as tabs; a Workspace fold can be pinned to the menu as a real
+destination and is removed if the fold is deleted. Help, Settings, reset and
+legal pages can't be hidden. Maps record the `VERSES` version; new pages appear
+in a "New" slot. TourClaw uses your labels ("Gigs (Jobs › Gig Board)"). Free
+tier, keyboard- and screen-reader-accessible — never a booster.
+
+Code (○): `member_menu_maps` (preset, base `VERSES` version, overrides JSON),
+`src/lib/menu-map.ts` (pure, used by header, launcher, wheel, TourClaw), a
+Customise menu screen, coverage test for maps.
+
+### Menu Dossier
+
+Codex pattern by username: the shared `Wheel` draws the default layout faintly
+and yours brightly, with **drift** per item (moved, renamed, hidden) replacing
+the satellite sync view, overall drift %, preset, pins, shortcuts, badges
+(Minimalist, Power user, Shortcut keys) and ADVANCED VIEW for map history.
+Public name "My Menu card".
+
+**It describes a person**, so: the user sees their own in full (YEY! for
+humans); partners/operators see **aggregates only** with a minimum group size
+(~20) and no usernames; support sees an individual dossier only via a one-off,
+time-limited "share my menu with support" link. It's profiling under UK/EU
+GDPR: stated purpose, privacy policy, DPA for partners, deletion on request.
+
+**Diagnosing partner apps:** Page Dossier (most-asked pages, old links) +
+aggregated Menu Dossiers (most moved/renamed/hidden items) + counted TourClaw
+questions → evidence-backed suggestions, e.g. "38% rename Workspace to
+Projects; Billing is the second most asked-about page." TourClaw never changes a
+partner's menus.
+
+### Menu Sync Protocol
+
+Updating the web through user intent, for sites that host the MyCustom Menu widget.
+
+- **User → host:** aggregate, anonymous intent improves the host's default menus.
+- **Host → user:** your saved preferences apply on every hosting site.
+- **`menu.md`:** hosts publish menu items with **standard types** (`billing`,
+  `settings`, `help`, `search`, `account`, `notifications`, `projects`…);
+  preferences target types, not labels; new types reviewed like dictionary
+  terms; unknown types keep the site's default.
+- **"Only boosts hosts"** means only hosts get diagnostics and portable menus —
+  **never** a search-ranking boost (a "supports MyCustom Menu" badge is fine).
+- **Privacy — the user holds the sync:** preferences stored with the user;
+  per-site consent ("Apply your saved menu here?"); a site gets only what applies
+  to its own menu; no shared ID across sites; diagnostics aggregate only
+  (UK/EU GDPR, PECR).
+
+#### Agentic ZKP Sync
+
+Reuses the ZKP sign-in (device keys, server stores only public keys):
+per-site keys derived from the device key (like passkeys) so sites can't link
+you; a new `sync` scope; preferences **encrypted on the device** so CharacterVerse
+stores but can't read them; device-signed type-level statements per site;
+revocation per site or device; a `zkp_audit`-style log of which sites synced
+when, never content. Caveats: losing all devices loses the keys (optional
+recovery key or second device); security review before it protects more than
+menus; account-based fallback with the same consent rules. Code (○): per-site
+derivation in `src/lib/zkp-client.ts`, `sync` scope in `api.zkp.ts`/`db/zkp.js`,
+`encrypted_menu_prefs`.
+
+## QTA — Quotes to Action (fifth Ask mode)
+
+A fifth entry in `MODES` (`src/lib/modes.ts`, after Roleplay, Learn, Business,
+SPR), giving `/mode/qta`, entrance cards, the switcher and TourClaw awareness.
+
+**Quote → Intent → Action / Application:**
+
+```
+ You:  "The script of life is life itself; & life will go on."
+ QTA:  Reading — living is the plan; setbacks don't stop the story.
+       ① Today: 10 minutes on something you've been waiting to start.
+       ② This week: note one thing that went wrong and what carried on.
+       ③ Ongoing: when over-planning, take the first small step.
+       [ Add to calendar ]  [ Make it a mission ]  [ Another reading ]
+```
+
+- One to three small, reversible actions at different scales; the user picks;
+  optional follow-through into `calendar_events` and `missions`.
+- **Events:** weddings, birthdays, anniversaries, retirements, graduations,
+  launches, memorials — the quote and intent shape vows, readings, reception,
+  decor, keepsakes and a dated timeline; every plan item shows what part of the
+  quote/intent it serves, and items serving neither are flagged; drafts are the
+  user's to edit; shared planning in a Workspace tab or room with roles.
+- **Rules:** no streaks or nagging; never guess or invent attributions; not
+  therapy — gentle tone and support links for grief and hardship; memorials get
+  no upbeat "action" framing; flag song lyrics and recent poems that may need
+  permission, suggest public-domain alternatives; respect chosen culture and
+  faith traditions; fit the stated budget, label any sponsored vendor; guest
+  lists stay private; own memory lane (`scope: 'qta'`); "done" actions count as
+  private Real World Application only.
+- Code (○): the `qta` `MODES` entry (label, ❝ emoji, accent, greeting,
+  placeholder, features Reading · Actions · Follow-through, quick starts incl.
+  "Plan a wedding around a quote", "Write vows from a quote"), event templates
+  with tone settings, calendar/missions buttons.

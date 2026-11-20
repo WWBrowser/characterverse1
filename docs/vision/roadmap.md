@@ -9,6 +9,9 @@ measurement, then the features that depend on them.
 | 2 | One identity — plans, wallets, tabs on member accounts | [Known issues](known-issues.md) | Everything depends on knowing who someone is |
 | 3 | Token metering, `inference_usage`, economy gauges | [Economy](02-economy.md) | See real costs and flows before adding new ones |
 | 4 | Search as the front page; shared Wheel; `whereAmI`; Verses/Wheel flip; TourClaw from `VERSES`; orphan list + coverage test | [Workspace OS](05-workspace-os.md) | The OS look at low risk |
+| 4a | Page Almanac generated from the route tree; almanac redirects; TourClaw reads the almanac; TourClaw moves to a Help entry + `/guide` (floating button opt-in) | [Workspace OS](05-workspace-os.md) | Replaces the stale site map; low risk |
+| 4c | MyCustom Menu (free tier) + Menu Dossier for the user | [Workspace OS](05-workspace-os.md) | Builds on `VERSES` and the shared Wheel |
+| 4d | QTA — fifth Ask mode, then event planning | [Workspace OS](05-workspace-os.md) | One `MODES` entry plus a prompt |
 | 4b | TourClaw personal guides (adopt a character), then twin guides | [Workspace OS](05-workspace-os.md) | Small, uses existing adoption and Twin Chat |
 | 5 | Character licences, licence search, birth-certificate licences | [Licences](04-licences.md) | Before more characters exist without one |
 | 6 | Payments: train tracks + holding yard + Ko-fi/BMC links, then Lemon Squeezy, payment wheel, flip faces, lifetime | [Payments](01-payments.md) | Money enters an identity-aware, metered system |
@@ -33,3 +36,7 @@ measurement, then the features that depend on them.
 | 25 | Agent Eyes prototype (still photos, gateway vision models), co-designed with blind testers | [WebWorld](10-webworld.md) | Research; safety review before anything real-time |
 | 26 | Think mode (latent reasoning) — only when serving engines support hybrid generation and tests prove it | [ThoughtHub](09-thoughthub.md) | Research; no custom GPU stack until proven |
 | 27 | Publisher licensing (indie and small presses first) | [WebWorld](10-webworld.md) | After payments revenue and the Listening Room |
+| 28 | The Seven Stores as CStore aisles (`src/lib/stores.ts`), starting with Plans and Boosters, then Widgets | [Stores](11-stores.md) | After payments (6) and boosters (7) |
+| 29 | TC-Link beta: site keys, `tourclaw.md`, white-label widget, per-partner metering, DPA; Page Dossier Advanced view | [Workspace OS](05-workspace-os.md) | Needs metering (3), payments (6), almanac (4a) |
+| 30 | Menu Sync Protocol: `menu.md`, widget, per-site consent, aggregate partner diagnostics | [Workspace OS](05-workspace-os.md) | After MyCustom Menu and TC-Link |
+| 31 | Agentic ZKP Sync: per-site keys, `sync` scope, on-device encrypted preferences | [Workspace OS](05-workspace-os.md) | After a ZKP security review |

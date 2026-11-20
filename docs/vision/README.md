@@ -16,11 +16,12 @@ what is planned, so nobody mistakes a plan for a feature.
 | 2 | [Economy](02-economy.md) | Inference gas (CVC), metering, merit pricing, traits vs merits, taps/drains/valves, Agent Coin, commons dividend, ZKPay |
 | 3 | [Boosters](03-boosters.md) | Booster Shop, life cycle, coin boosters, slots, Goodwill Reserve and rarity, Enterprise bubble, inference boosters, CStoreClaw/BoostClaw |
 | 4 | [Licences](04-licences.md) | Character licences, presets, licence search, birth certificates |
-| 5 | [Workspace OS](05-workspace-os.md) | Fold Tabs, Nesting Dolls, Enterprise doll, Search as the front page, Seven Entrances "you are here" wheel, TourClaw, orphan pages |
+| 5 | [Workspace OS](05-workspace-os.md) | Fold Tabs, Nesting Dolls, Enterprise doll, Search as the front page, Seven Entrances "you are here" wheel, TourClaw, orphan pages, TourClaw shop and guides, TC-Link, Page Almanac and redirects, Page Dossier, MyCustom Menu, Menu Sync + ZKP Sync, QTA mode |
 | 6 | [Forge economy](06-forge.md) | Shared brick bucket, duplicates and variants, royalties, RWA weights, fusion, FusionClaw, salvage yard, collaborative projects |
 | 7 | [Agent web](07-agent-web.md) | WWB, HTMLA / HTTPAS, rollout phases, AI certificates, ARN, HELIX Certificate Security, EALA, sentinels, REA / RevClaw |
 | 8 | [The Table](08-table.md) | Multi-model `@mention` rooms, AI-to-AI metering life cycle, bring your own table, team table, Pen Test Poker, spin-out and boomerang |
 | 9 | [ThoughtHub](09-thoughthub.md) | GitHub + Hugging Face for character thought, herd view, WAT signatures, Hugging Face public square, Think mode, agentic sub-conscience, P@B, YEY!, NaR, RLSF, NFaNF, notes archive and categories, frontier |
+| 11 | [The Seven Stores](11-stores.md) | Plans, Boosters, Widgets, TourClaw shop, Characters, Forge bucket, Salvage yard — one wallet and ledger; the Widget Store |
 | 10 | [WebWorld](10-webworld.md) | SpatialVerse worlds and sub-worlds, the open-standard play, shared spatial dictionary, `spatial.md`, the Listening Room, Agent Eyes |
 | — | [Known issues](known-issues.md) | Security and coherence gaps found in the current code |
 | — | [Roadmap](roadmap.md) | Build order |
@@ -73,6 +74,29 @@ The rules that follow from them, used as tests for every new feature:
 12. **Dissipate heat through good contextualized systems (DHTGCS).** Give each
     task the context it needs and nothing it doesn't: cool where it's known,
     spend tokens where it's new.
+13. **The customer is always right in matters of taste.** Let people arrange
+    menus their way; keep the way back (Help, Settings, reset) in place.
+
+## A.O. — Artificial Organism
+
+The framing for tech that mirrors evolution, linking pieces already in the
+design: birth certificates (birth), parents and lineage (inheritance), ICQE's
+Junk/Dormant/Blossomed strands (DNA), genetic quirks (mutation), satellites
+and variants (variation), merits and RWA (selection), the herd and Synapse
+Collective (population), chunk fusion (hybrids), retired almanac pages and
+Junk-DNA notes (fossils), the notes archive (memory across generations).
+Related field: Artificial Life (A-Life), evolutionary computation.
+
+Three rules it brings:
+
+1. **You get what you select for.** Every reward (merits, RWA, royalties, RLSF)
+   is a selection pressure — check what it really breeds (e.g. models moving
+   thinking into latent space, or learning to hide "bad thoughts").
+2. **Diversity is survival.** Keep herd diversity gauges and quarantine strict.
+3. **Reproduction needs limits.** Agents never spawn copies, satellites or
+   sub-agents on their own: new births need human approval, gas and caps.
+
+A.O. describes structure, not life — "show the trick, don't sell the soul".
 
 ## Advice still needed
 
